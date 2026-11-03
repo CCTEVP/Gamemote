@@ -1,0 +1,14 @@
+{
+  "version": 0,
+  "name": "Wave",
+  "blocks": [
+    {"id": "b1", "op": "set", "ch": 2, "value": 0},
+    {"id": "b2", "op": "repeat", "times": 3, "body": [
+      {"id": "b3", "op": "set", "ch": 2, "value": 180},
+      {"id": "b4", "op": "wait", "ms": 500},
+      {"id": "b5", "op": "set", "ch": 2, "value": 0},
+      {"id": "b6", "op": "wait", "ms": 500}
+    ]},
+    {"id": "b7", "op": "trigger", "action": 1, "params": [200]}
+  ]
+}

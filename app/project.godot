@@ -1,0 +1,37 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Gamemote"
+config/description="Remote control for Bluetooth LE devices: live controller and routines."
+config/version="0.1.0"
+run/main_scene="res://ui/main.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+run/low_processor_mode=true
+config/icon="res://icon.svg"
+
+[autoload]
+
+UiScale="*res://core/ui_scale.gd"
+Device="*res://core/device_service.gd"
+
+[display]
+
+window/size/viewport_width=1180
+window/size/viewport_height=640
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true

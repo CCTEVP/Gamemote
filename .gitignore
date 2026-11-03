@@ -1,0 +1,18 @@
+# Exports
+/build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# SCons / native build
+.sconsign*.dblite
+native/gamemote_ble/.venv/
+native/gamemote_ble/src/*.o
+native/gamemote_ble/src/*.os
+native/gamemote_ble/src/gen/
+
+# macOS
+.DS_Store

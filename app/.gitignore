@@ -1,0 +1,7 @@
+# Godot
+.godot/
+/android/
+*.translation
+
+# Native extension build output (build with native/gamemote_ble/build_apple.sh)
+addons/gamemote_ble/bin/

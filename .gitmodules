@@ -1,0 +1,5 @@
+[submodule "native/gamemote_ble/godot-cpp"]
+	path = native/gamemote_ble/godot-cpp
+	url = https://github.com/godotengine/godot-cpp
+	ignore = dirty
+	shallow = true

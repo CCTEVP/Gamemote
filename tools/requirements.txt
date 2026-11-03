@@ -1,0 +1,3 @@
+# Gamemote dev tools (simulator + CLI). Python 3.10+.
+bleak>=1.0
+bless>=0.3

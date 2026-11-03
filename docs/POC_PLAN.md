@@ -12,6 +12,30 @@
 
 ---
 
+## Decisions so far (updated 2026-11-03)
+
+| Topic | Decision |
+|---|---|
+| Hardware | **Not chosen yet.** Any BLE board that implements [`protocol/PROTOCOL.md`](../protocol/PROTOCOL.md) is compatible. Until there is one, `tools/gm_sim.py` turns a Mac into the device. ESP32-S3 remains the recommended first board. |
+| Devices | **iPhone and iPad** (one universal app). Android is not planned for now. |
+| Developer workflow | You pull `main`, build the extension on your Mac, export from Godot to Xcode and deploy. See [GETTING_STARTED.md](GETTING_STARTED.md). |
+| Apple account | **The free Apple ID is enough** for a hobby project (7-day installs). The $99/year program is only needed for TestFlight or the App Store. |
+| Routine modes | **Live** (runs in the app, stops when disconnected) and **Transferred** (uploaded, keeps running on the board if the board supports it). Both are in the PoC and share one bytecode. |
+| Purpose | Hobby, so licensing and security stay light; still avoid BUSL libraries. |
+| Toolchain | Godot **4.7.2**, godot-cpp **10.0.0** (built against the 4.5 API, so it loads in 4.5–4.7), Xcode, Python 3. |
+
+## Status
+
+| Milestone | State |
+|---|---|
+| M0 Setup | ✅ Repo skeleton, protocol v0 spec and test vectors, CI |
+| M1 Firmware | ⏸ Waiting for a board choice. The Python simulator implements the same device behaviour. |
+| M2 Native bridge / tracer bullet | 🟡 Built and tested on Linux (stub backend) and in macOS CI. **Waiting for the on-device test** ([checklist](GETTING_STARTED.md#7-what-to-test-tracer-bullet-checklist)). |
+| M3 App core | 🟡 Mostly done: transports (BLE + mock), protocol, DeviceService, auto-reconnect, RTT, both routine modes |
+| M4 Controller UI · M5 Block editor · M6 Hardening | ⏳ Not started |
+
+---
+
 ## 0. Scope
 
 | In the PoC | Deferred to later phases |
@@ -21,7 +45,7 @@
 | GATT protocol v0 with a capability descriptor | Pairing/bonding, encryption, auth |
 | One fixed controller layout with re-bindable controls | Layout designer (drag controls around) |
 | Block editor: set, trigger, wait, repeat, stop | Conditions, sensors, variables, events, functions |
-| Routines run **in the app** | Routines uploaded to and run **on the device** |
+| Routines in **Live** mode (app) and **Transferred** mode (device), with one routine slot | Several stored routines, auto-run on boot |
 | Local storage of layouts and routines | Cloud sync, sharing |
 
 ### PoC exit criteria (measurable)
@@ -226,6 +250,18 @@ iOS and macOS from the same source.**
   `godot-cpp` to the same minor version as the Godot editor.** iOS GDExtension packaging changed
   in 4.3, so version mismatch is the most common failure.
 
+Implementation notes (checked against Godot 4.7.2 and godot-cpp 10.0.0 sources):
+- iOS uses **static** `.xcframework`s (ours plus godot-cpp's, declared as a dependency in the
+  `.gdextension`), the same layout as godot-cpp's own test project.
+- The Godot-generated Xcode project lists no system frameworks. The engine itself relies on clang
+  module **auto-linking** (`-fmodules -fcxx-modules`), and our `.mm` does the same with
+  `@import CoreBluetooth;`. CI verifies the `LC_LINKER_OPTION` and does an iOS link test.
+- The CoreBluetooth code is isolated in one `.mm` file behind a plain C++ interface. The
+  godot-cpp class compiles everywhere, so the extension also builds and loads on Linux with a stub
+  backend, and the API is tested in CI.
+- If `NSBluetoothAlwaysUsageDescription` is missing, the backend reports state
+  `MISSING_USAGE_DESCRIPTION` instead of crashing. This applies, for example, to the macOS editor binary.
+
 Options considered:
 - *Existing Asset Library BLE plugins* (e.g. GDBLE, Rust/btleplug-based): worth **a 2-hour
   timeboxed evaluation**, because btleplug has a CoreBluetooth backend. The listings don't confirm
@@ -237,7 +273,7 @@ Options considered:
 
 ### Stage 5 — Godot app architecture
 
-**Recommendation: Godot 4.6.x (latest stable, pinned in the repo), GDScript only, autoload
+**Recommendation: Godot 4.7.x (latest stable, pinned in the repo), GDScript only, autoload
 services, and a transport abstraction with a mock.**
 
 - **Autoloads:**
@@ -310,8 +346,9 @@ built-in drag-and-drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`).**
   - Wait deadlines are computed from the *scheduled* time, not "now", so there is no drift.
   - The VM emits `step_started(block_id)` so the running block is highlighted in the editor.
   - `stop()` halts immediately and sends `STOP_ALL`.
-  - **Why flat bytecode:** the same program can later be serialized and **uploaded to the MCU**
-    (Phase 2), so routines keep running after a disconnect and get MCU-precise timing.
+  - **Why flat bytecode:** the same program is **uploaded to the MCU** in Transferred mode
+    (`ROUTINE_BEGIN/CHUNK/END/RUN`), so a routine behaves identically in both modes and keeps
+    running after a disconnect. Already implemented in the app, the simulator and the mock device.
 
 Options considered:
 - *GraphEdit (built into Godot)*: fast to build, but node-and-wire graphs suit data flow, not
@@ -367,7 +404,7 @@ the iPhone lights the LED) before building any of the UI. Effort is in rough dev
 | M2 | **Native bridge spike (go/no-go):** GDExtension scan/connect/read/write/notify; a minimal Godot scene with a Connect button and an LED toggle | 3–5 d | **Button on the iPhone toggles the LED, and telemetry appears in the log.** If this stalls past ~7 days, re-evaluate the stack (§6). |
 | M3 | **App core:** DeviceService state machine, Ble + Mock transports, Protocol + tests, ActionRegistry from INFO, connect screen, auto-reconnect, debug overlay | 2–3 d | Exit criteria 1 and 4 met |
 | M4 | **Live controller:** multitouch joystick/buttons/slider, bindings + edit mode, 30 Hz streamer, STOP | 3–4 d | Joystick drives the servo, a button beeps, criteria 2 and 3 met |
-| M5 | **Routine editor + VM:** palette, drag/drop stacking, params, nested repeat, save/load, compile → VM, highlight, run/stop | 5–7 d | Build "wave servo 3× then beep", run it, stop it mid-run → device neutral; criterion 5 met |
+| M5 | **Routine editor:** palette, drag/drop stacking, params, nested repeat, save/load, run in Live or Transferred mode, highlight the running block (compiler, VM and upload already exist) | 4–6 d | Build "wave servo 3× then beep", run it, stop it mid-run → device neutral; criterion 5 met |
 | M6 | **Hardening + evaluation:** walk-away, app-kill, device-reboot and background tests; 30-min soak; demo video; retrospective | 2–3 d | All exit criteria met; written go/no-go for Phase 2 |
 
 **Total: about 18–28 developer-days (4–6 weeks for one person).** M2 carries the most risk and
@@ -375,7 +412,7 @@ gates everything after it.
 
 ### After the PoC (likely Phase 2 candidates)
 
-- On-device routine execution (upload bytecode via a new `ROUTINE_*` frame family).
+- Several stored routines per device, persisted in flash, optional auto-run on boot.
 - Layout designer (drag controls, multiple pages, gyro/tilt input).
 - Sensors in blocks (`wait until`, `if`), variables, events.
 - Android transport (Kotlin Godot plugin with the same API as `GamemoteBle`).
@@ -387,21 +424,28 @@ gates everything after it.
 
 ```
 Gamemote/
-├── app/                      # Godot 4.6.x project (GDScript)
-│   ├── addons/gamemote_ble/  # .gdextension + built binaries (from native/)
-│   ├── core/                 # device_service.gd, protocol.gd, action_registry.gd,
-│   │                         # control_streamer.gd, storage.gd, transports/
-│   ├── routines/             # ast, compiler, vm
-│   ├── ui/                   # connect/, controller/, editor/, debug/
-│   └── tests/
-├── native/gamemote_ble/      # GDExtension source (Objective-C++), SConstruct
-│   └── godot-cpp/            # git submodule, pinned to the Godot minor version
-├── firmware/                 # PlatformIO project (ESP32-S3, NimBLE-Arduino)
-├── protocol/                 # PROTOCOL.md, test_vectors.json, capability.schema.json
-├── tools/                    # gm_cli.py (bleak), device simulator
-├── docs/                     # this plan, decisions (ADRs), wiring diagrams
-└── .github/workflows/        # firmware, app-tests, native
+├── app/                          # Godot 4.7 project (GDScript)
+│   ├── addons/gamemote_ble/      # .gdextension (+ bin/ built by build_apple.sh, git-ignored)
+│   ├── core/
+│   │   ├── protocol.gd           # frames, CRC (GmProtocol)
+│   │   ├── routine.gd            # compiler, validator, VM (GmRoutine)
+│   │   ├── device_service.gd     # autoload "Device": connection, streaming, routines
+│   │   ├── ui_scale.gd           # autoload "UiScale": 1 UI unit = 1 pt, safe area
+│   │   └── transports/           # transport.gd, ble_transport.gd, mock_transport.gd, mock_device.gd
+│   ├── ui/main.tscn, main.gd     # tracer-bullet screen (replaced by M4/M5 screens)
+│   ├── tests/run_tests.gd        # headless tests (vectors, mock device, service, UI)
+│   └── export_presets.cfg        # iOS preset: iPhone+iPad, BT usage string, project-only export
+├── native/gamemote_ble/          # GDExtension: C++ class + CoreBluetooth backend (.mm) + stub
+│   ├── godot-cpp/                # submodule, 10.0.0-stable
+│   ├── build_apple.sh            # one command: iOS device+simulator xcframeworks + macOS
+│   └── ci/link_test.sh           # proves CoreBluetooth auto-links
+├── protocol/                     # PROTOCOL.md (v0), test_vectors.json
+├── tools/                        # gamemote/ (Python reference impl), gm_sim.py, gm_cli.py, tests/
+├── docs/                         # this plan, GETTING_STARTED.md
+└── .github/workflows/            # ci.yml (Linux), native-apple.yml (macOS/iOS)
 ```
+
+Firmware (`firmware/`) is added in M1, once a board is chosen.
 
 ---
 
@@ -409,7 +453,7 @@ Gamemote/
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Godot iOS native toolchain friction (xcframework packaging, plugin docs lagging behind 4.6) | High | Do M2 first, pin versions, keep the bridge tiny and generic, use the macOS build of the same code for fast loops. **Fallback stack: Flutter + flutter_blue_plus.** |
+| Godot iOS native toolchain friction (xcframework packaging, plugin docs lagging behind 4.6+) | High | Do M2 first, pin versions, keep the bridge tiny and generic, use the macOS build of the same code for fast loops. **Fallback stack: Flutter + flutter_blue_plus.** |
 | Multitouch issues with stock Controls | Medium | Custom touch controls keyed by finger index (Stage 6) |
 | BLE latency and jitter on iOS | Medium | State streaming, coalescing, write-without-response, measure RTT from day one |
 | Link loss while actuators are moving | High (safety) | Device-side 500 ms failsafe, STOP_ALL on background, always-visible STOP button |
@@ -428,15 +472,12 @@ Gamemote/
 
 ---
 
-## 7. Open questions (they change details, not the plan's shape)
+## 7. Open questions
 
-1. **What will the final device control?** (rover/robot, lights, animatronic, toy, …) This sets
-   the channel types and how strict the real-time needs are.
-2. **Do you have a Mac and an iPhone available?** Will you join the Apple Developer Program for TestFlight?
-3. **Your experience** with Godot/GDScript, C++/Objective-C and embedded C++: this decides where to
-   put more scaffolding or tutorials.
-4. **Is Android needed later?** The plan keeps it open either way.
-5. **Multiple devices at once** (e.g. two robots)? That affects `DeviceService` and the protocol addressing.
-6. **Should routines keep running after the phone disconnects** in v1? If yes, move on-device
-   execution earlier.
-7. **Commercial product or hobby/open source?** This affects licensing choices and security priorities.
+The first round is answered (see *Decisions so far* at the top). Still open:
+
+1. **Which board?** This decides the M1 firmware. When you choose, consider whether it has room
+   for the routine VM, which Transferred mode needs.
+2. **What will it control first** (motors, servos, LEDs, sound)? This decides the real channel list
+   and how strict the failsafe must be.
+3. After the on-device test: **are the RTT and the feel good enough** to commit to Godot (the M2 go/no-go)?

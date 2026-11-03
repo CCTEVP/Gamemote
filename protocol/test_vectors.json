@@ -1,0 +1,123 @@
+{
+  "version": 0,
+  "crc": [
+    {"name": "check value", "data_ascii": "123456789", "crc": 10673}
+  ],
+  "frames": [
+    {"name": "set one channel", "hex": "0105025a00", "frame": {"type": "SET", "seq": 5, "pairs": [[2, 90]]}},
+    {"name": "set two channels, negative value", "hex": "010601ff00039cff", "frame": {"type": "SET", "seq": 6, "pairs": [[1, 255], [3, -100]]}},
+    {"name": "trigger with one param", "hex": "020701c800", "frame": {"type": "TRIGGER", "seq": 7, "action": 1, "params": [200]}},
+    {"name": "trigger without params", "hex": "020802", "frame": {"type": "TRIGGER", "seq": 8, "action": 2, "params": []}},
+    {"name": "stop all", "hex": "0308", "frame": {"type": "STOP_ALL", "seq": 8}},
+    {"name": "ping", "hex": "040978563412", "frame": {"type": "PING", "seq": 9, "t": 305419896}},
+    {"name": "routine begin", "hex": "100a002300", "frame": {"type": "ROUTINE_BEGIN", "seq": 10, "slot": 0, "length": 35}},
+    {"name": "routine chunk", "hex": "110b10000102", "frame": {"type": "ROUTINE_CHUNK", "seq": 11, "offset": 16, "data": "0102"}},
+    {"name": "routine end", "hex": "120cefbe", "frame": {"type": "ROUTINE_END", "seq": 12, "crc": 48879}},
+    {"name": "routine run", "hex": "130d00", "frame": {"type": "ROUTINE_RUN", "seq": 13, "slot": 0}},
+    {"name": "routine stop", "hex": "140e", "frame": {"type": "ROUTINE_STOP", "seq": 14}},
+    {"name": "ack ok", "hex": "81030700", "frame": {"type": "ACK", "seq": 3, "ref_seq": 7, "status": 0}},
+    {"name": "ack bad program", "hex": "81040805", "frame": {"type": "ACK", "seq": 4, "ref_seq": 8, "status": 5}},
+    {"name": "pong", "hex": "820078563412", "frame": {"type": "PONG", "seq": 0, "t": 305419896}},
+    {"name": "telemetry running", "hex": "83040102000008", "frame": {"type": "TELEMETRY", "seq": 4, "flags": 1, "step": 2, "values": [2048]}},
+    {"name": "telemetry idle, negative value", "hex": "830500ffffffff", "frame": {"type": "TELEMETRY", "seq": 5, "flags": 0, "step": 65535, "values": [-1]}},
+    {"name": "log", "hex": "84066869", "frame": {"type": "LOG", "seq": 6, "text": "hi"}},
+    {"name": "routine state running", "hex": "8507010000", "frame": {"type": "ROUTINE_STATE", "seq": 7, "state": 1, "step": 0}}
+  ],
+  "invalid_frames": [
+    {"name": "shorter than header", "hex": "01"},
+    {"name": "set with partial pair", "hex": "0105025a"},
+    {"name": "ping with short timestamp", "hex": "04087856"},
+    {"name": "stop all with payload", "hex": "030800"},
+    {"name": "unknown type", "hex": "ff00"},
+    {"name": "longer than 20 bytes", "hex": "010101000001000001000001000001000001000001"}
+  ],
+  "routines": [
+    {
+      "name": "wave",
+      "ast": {"version": 0, "name": "Wave", "blocks": [
+        {"id": "b1", "op": "set", "ch": 2, "value": 0},
+        {"id": "b2", "op": "repeat", "times": 3, "body": [
+          {"id": "b3", "op": "set", "ch": 2, "value": 180},
+          {"id": "b4", "op": "wait", "ms": 500},
+          {"id": "b5", "op": "set", "ch": 2, "value": 0},
+          {"id": "b6", "op": "wait", "ms": 500}
+        ]},
+        {"id": "b7", "op": "trigger", "action": 1, "params": [200]}
+      ]},
+      "program_hex": "474d0001020000040300 0102b400 03f4010000 01020000 03f4010000 05 020101c800 00",
+      "length": 35,
+      "crc": 4695,
+      "step_blocks": ["b1", "b2", "b3", "b4", "b5", "b6", "b2", "b7", null],
+      "trace": [
+        [0, "set", 2, 0],
+        [0, "set", 2, 180],
+        [500, "set", 2, 0],
+        [1000, "set", 2, 180],
+        [1500, "set", 2, 0],
+        [2000, "set", 2, 180],
+        [2500, "set", 2, 0],
+        [3000, "trigger", 1, [200]]
+      ],
+      "finished_at_ms": 3000
+    },
+    {
+      "name": "forever blink",
+      "ast": {"version": 0, "name": "Blink", "blocks": [
+        {"id": "f1", "op": "forever", "body": [
+          {"id": "f2", "op": "set", "ch": 1, "value": 255},
+          {"id": "f3", "op": "wait", "ms": 250},
+          {"id": "f4", "op": "set", "ch": 1, "value": 0},
+          {"id": "f5", "op": "wait", "ms": 250}
+        ]}
+      ]},
+      "program_hex": "474d00 040000 0101ff00 03fa000000 01010000 03fa000000 05 00",
+      "length": 26,
+      "crc": 13534,
+      "step_blocks": ["f1", "f2", "f3", "f4", "f5", "f1", null],
+      "trace_until_ms": 1000,
+      "trace": [
+        [0, "set", 1, 255],
+        [250, "set", 1, 0],
+        [500, "set", 1, 255],
+        [750, "set", 1, 0],
+        [1000, "set", 1, 255]
+      ],
+      "finished_at_ms": null
+    },
+    {
+      "name": "empty",
+      "ast": {"version": 0, "name": "Empty", "blocks": []},
+      "program_hex": "474d00 00",
+      "length": 4,
+      "crc": 58509,
+      "step_blocks": [null],
+      "trace": [],
+      "finished_at_ms": 0
+    },
+    {
+      "name": "stop all",
+      "ast": {"version": 0, "name": "Stop", "blocks": [{"id": "s1", "op": "stop_all"}]},
+      "program_hex": "474d00 06 00",
+      "length": 5,
+      "crc": 39436,
+      "step_blocks": ["s1", null],
+      "trace": [[0, "stop_all"]],
+      "finished_at_ms": 0
+    }
+  ],
+  "invalid_programs": [
+    {"name": "bad magic", "hex": "585800 00"},
+    {"name": "missing halt", "hex": "474d00 01020000"},
+    {"name": "unbalanced loop", "hex": "474d00 040300 00"},
+    {"name": "end loop without loop", "hex": "474d00 05 00"},
+    {"name": "truncated set", "hex": "474d00 0102"},
+    {"name": "bytes after halt", "hex": "474d00 00 00"},
+    {"name": "unknown channel 9", "hex": "474d00 01090000 00"},
+    {"name": "loop nesting 5 deep", "hex": "474d00 040100 040100 040100 040100 040100 05 05 05 05 05 00"}
+  ],
+  "test_device": {
+    "channel_ids": [1, 2, 3],
+    "action_ids": [1],
+    "max_loop_depth": 4
+  }
+}
