@@ -41,6 +41,11 @@ jobs:
           unzip -q godot.zip
           mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
       - name: Import project
-        run: ./godot --headless --path app --import
+        # The first headless import that picks up a GDExtension can crash on exit
+        # (upstream godotengine/godot#111048); the import itself completes. The
+        # second import starts with the extension already registered and must be clean.
+        run: |
+          ./godot --headless --path app --import || echo "::warning::first import exited with $? (known upstream crash on exit)"
+          ./godot --headless --path app --import
       - name: Run tests
         run: ./godot --headless --path app -s res://tests/run_tests.gd

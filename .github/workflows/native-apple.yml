@@ -53,6 +53,8 @@ jobs:
       - name: Run app tests on macOS (loads the CoreBluetooth backend)
         run: |
           GODOT=Godot.app/Contents/MacOS/Godot
+          # First import may crash on exit (upstream godotengine/godot#111048); see ci.yml.
+          $GODOT --headless --path app --import || echo "::warning::first import exited with $? (known upstream crash on exit)"
           $GODOT --headless --path app --import
           $GODOT --headless --path app -s res://tests/run_tests.gd
 

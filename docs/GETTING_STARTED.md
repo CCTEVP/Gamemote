@@ -131,6 +131,7 @@ if something failed.
 | *Bluetooth* is greyed out in the transport menu | The extension binaries weren't found: run `build_apple.sh` (step 2) before exporting. |
 | App stops opening after a week | Free-account installs expire after 7 days. Press Run in Xcode again. |
 | `godot-cpp/SConstruct not found` | `git submodule update --init` |
+| Godot crashes when you **close** the editor the first time you open the project | A known Godot bug when an extension is loaded for the first time ([godotengine/godot#111048](https://github.com/godotengine/godot/issues/111048)). Your project is already saved; reopen it and it won't happen again. |
 
 ## Do I need the $99/year Apple Developer Program?
 

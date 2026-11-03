@@ -183,7 +183,15 @@ public:
 		NSString *key = to_ns(char_uuid);
 		NSData *payload = [NSData dataWithBytes:data.data() length:data.size()];
 		if (!with_response && !can_send_.load()) {
-			return false; // caller keeps the latest state and retries on ready_to_send
+			// Caller keeps the latest state and retries next frame. Re-read the real flag:
+			// peripheralIsReadyToSendWriteWithoutResponse only fires after a queued write,
+			// so a stale "false" (e.g. from connection time) would otherwise never clear.
+			dispatch_async(queue_, ^{
+				if (peripheral_) {
+					can_send_ = peripheral_.canSendWriteWithoutResponse;
+				}
+			});
+			return false;
 		}
 		dispatch_async(queue_, ^{
 			CBCharacteristic *c = characteristic(key, "write");
@@ -383,6 +391,11 @@ private:
 	}
 
 	void services_ready() {
+		if (peripheral_) {
+			can_send_ = peripheral_.canSendWriteWithoutResponse;
+			max_write_with_response_ = (int)[peripheral_ maximumWriteValueLengthForType:CBCharacteristicWriteWithResponse];
+			max_write_without_response_ = (int)[peripheral_ maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse];
+		}
 		Event e;
 		e.type = EventType::ServicesDiscovered;
 		for (NSString *key in characteristics_) {
