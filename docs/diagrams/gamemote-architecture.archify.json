@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gamemote PoC architecture",
+    "output": ".archify/architecture-gamemote-20261104-182246/gamemote-architecture.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": { "url": "https://github.com/CCTEVP/Gamemote", "provider": "github", "link_mode": "web", "revision": "b7c55aedc43f69e4bd71ceac5e4b0274cf060d33" }
+  },
+  "components": [
+    { "id": "player", "type": "external", "label": "Person", "sublabel": "iPhone / iPad touch", "pos": [40, 200], "size": [120, 64] },
+    { "id": "ui", "type": "frontend", "label": "Tracer screen", "sublabel": "ui/main.gd", "pos": [250, 200], "size": [150, 64], "tag": "sliders · actions · STOP",
+      "sources": [ { "path": "app/ui/main.gd", "line": 79, "end_line": 180, "label": "builds controls" }, { "path": "app/ui/main.gd", "line": 413, "end_line": 425, "label": "run live / transfer" } ] },
+    { "id": "service", "type": "backend", "label": "DeviceService", "sublabel": "autoload Device", "pos": [550, 200], "size": [170, 64], "tag": "30 Hz stream · PING 250 ms",
+      "sources": [ { "path": "app/core/device_service.gd", "line": 296, "end_line": 324, "label": "coalesced SET + keepalive" }, { "path": "app/core/device_service.gd", "line": 361, "end_line": 393, "label": "routine upload" }, { "path": "app/core/device_service.gd", "line": 460, "end_line": 466, "label": "STOP_ALL on pause" } ] },
+    { "id": "routine", "type": "backend", "label": "Routine compiler + VM", "sublabel": "core/routine.gd", "pos": [550, 40], "size": [170, 64],
+      "sources": [ { "path": "app/core/routine.gd", "line": 30, "end_line": 39, "label": "AST to bytecode" }, { "path": "app/core/routine.gd", "line": 171, "end_line": 242, "label": "VM" } ] },
+    { "id": "mock", "type": "backend", "label": "GmMockTransport", "sublabel": "in-app mock device", "pos": [550, 380], "size": [170, 64],
+      "sources": [ { "path": "app/core/transports/mock_transport.gd", "line": 38, "end_line": 60 }, { "path": "app/core/transports/mock_device.gd", "line": 128, "end_line": 216 } ] },
+    { "id": "bletransport", "type": "backend", "label": "GmBleTransport", "sublabel": "GATT handshake", "pos": [880, 200], "size": [170, 64],
+      "sources": [ { "path": "app/core/transports/ble_transport.gd", "line": 104, "end_line": 129, "label": "services, EVT, INFO" } ] },
+    { "id": "extension", "type": "backend", "label": "GamemoteBle", "sublabel": "GDExtension (C++)", "pos": [880, 380], "size": [170, 64], "tag": "event queue + poll()",
+      "sources": [ { "path": "native/gamemote_ble/src/gamemote_ble.cpp", "line": 96, "end_line": 146, "label": "poll emits signals" } ] },
+    { "id": "corebt", "type": "external", "label": "CoreBluetooth", "sublabel": "iOS framework", "pos": [880, 560], "size": [170, 64],
+      "sources": [ { "path": "native/gamemote_ble/src/ble_backend_apple.mm", "line": 78, "end_line": 99, "label": "usage-string guard" }, { "path": "native/gamemote_ble/src/ble_backend_apple.mm", "line": 182, "end_line": 210, "label": "write flow control" } ] },
+    { "id": "device", "type": "external", "label": "Gamemote device", "sublabel": "gm_sim.py now, board later", "pos": [1260, 560], "size": [190, 64], "tag": "failsafe 500 ms",
+      "sources": [ { "path": "tools/gm_sim.py", "line": 51, "end_line": 127, "label": "BLE peripheral" }, { "path": "tools/gamemote/device.py", "line": 133, "end_line": 251, "label": "device behaviour" }, { "path": "protocol/PROTOCOL.md", "line": 116, "end_line": 126, "label": "safety rules" } ] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Godot 4.7 app on iPhone / iPad", "wraps": ["ui", "service", "routine", "mock", "bletransport", "extension"] },
+    { "kind": "region", "label": "BLE peripheral", "wraps": ["device"] }
+  ],
+  "connections": [
+    { "id": "touch", "from": "player", "to": "ui", "label": "tap / drag", "variant": "emphasis" },
+    { "id": "commands", "from": "ui", "to": "service", "label": "set_channel · run_*", "variant": "emphasis" },
+    { "id": "vm", "from": "service", "to": "routine", "label": "compile · tick VM" },
+    { "id": "frames", "from": "service", "to": "bletransport", "label": "CMD / EVT frames", "variant": "emphasis" },
+    { "id": "desktop", "from": "service", "to": "mock", "label": "desktop / tests", "variant": "dashed" },
+    { "id": "native", "from": "bletransport", "to": "extension", "label": "write · notify · poll" },
+    { "id": "os", "from": "extension", "to": "corebt", "label": "serial dispatch queue" },
+    { "id": "gatt", "from": "corebt", "to": "device", "label": "BLE GATT: CMD · EVT · INFO", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Protocol v0", "items": ["20-byte frames: SET, TRIGGER, STOP_ALL, PING, ROUTINE_*", "Device describes its channels and actions in INFO JSON", "Same test vectors for Python, GDScript and firmware"] },
+    { "dot": "emerald", "title": "Two routine modes", "items": ["Live: the app VM sends SET/TRIGGER; stops on disconnect", "Transferred: bytecode uploaded, runs on the device after disconnect"] },
+    { "dot": "rose", "title": "Safety", "items": ["Device goes neutral after 500 ms without frames (Live)", "App sends STOP_ALL when paused, except Transferred", "Every routine ends with all channels neutral"] }
+  ]
+}

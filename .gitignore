@@ -16,3 +16,6 @@ native/gamemote_ble/src/gen/
 
 # macOS
 .DS_Store
+
+# Archify working folders (finalized diagrams are copied to docs/diagrams/)
+.archify/

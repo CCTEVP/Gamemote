@@ -14,6 +14,7 @@ for the first on-device test.
 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Build, export to Xcode, run on iPhone/iPad, test checklist |
 | [docs/POC_PLAN.md](docs/POC_PLAN.md) | Plan, decisions, milestones, risks |
 | [protocol/PROTOCOL.md](protocol/PROTOCOL.md) | BLE protocol v0: what makes a board "Gamemote-compatible" |
+| [docs/diagrams/](docs/diagrams/) | Architecture map and expected-flow sequence (Archify HTML; open in a browser) |
 
 ## Layout
 

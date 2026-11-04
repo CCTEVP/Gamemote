@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Gamemote expected flow: connect, live control, transferred routine",
+    "output": ".archify/sequence-gamemote-flow-20261104-182317/gamemote-flow.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/CCTEVP/Gamemote",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "b7c55aedc43f69e4bd71ceac5e4b0274cf060d33"
+    },
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "main command"
+        },
+        "dashed": {
+          "label": "keepalive / teardown"
+        },
+        "security": {
+          "label": "safety decision"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "person",
+      "type": "external",
+      "label": "Person",
+      "sublabel": "iPhone / iPad"
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Tracer screen",
+      "sublabel": "ui/main.gd",
+      "sources": [
+        {
+          "path": "app/ui/main.gd",
+          "line": 413,
+          "end_line": 425
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "DeviceService",
+      "sublabel": "autoload Device",
+      "sources": [
+        {
+          "path": "app/core/device_service.gd",
+          "line": 296,
+          "end_line": 324
+        },
+        {
+          "path": "app/core/device_service.gd",
+          "line": 361,
+          "end_line": 393
+        },
+        {
+          "path": "app/core/device_service.gd",
+          "line": 136,
+          "end_line": 146
+        }
+      ]
+    },
+    {
+      "id": "ble",
+      "type": "backend",
+      "label": "BLE stack",
+      "sublabel": "transport + GDExtension",
+      "sources": [
+        {
+          "path": "app/core/transports/ble_transport.gd",
+          "line": 104,
+          "end_line": 129
+        },
+        {
+          "path": "native/gamemote_ble/src/ble_backend_apple.mm",
+          "line": 257,
+          "end_line": 275
+        }
+      ]
+    },
+    {
+      "id": "device",
+      "type": "external",
+      "label": "Gamemote device",
+      "sublabel": "gm_sim.py / board",
+      "sources": [
+        {
+          "path": "tools/gamemote/device.py",
+          "line": 133,
+          "end_line": 251
+        },
+        {
+          "path": "protocol/PROTOCOL.md",
+          "line": 168,
+          "end_line": 186
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 404,
+      "label": "1 · Connect"
+    },
+    {
+      "from": 414,
+      "to": 602,
+      "label": "2 · Live control"
+    },
+    {
+      "from": 612,
+      "to": 930,
+      "label": "3 · Transferred routine"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m-scan",
+      "from": "person",
+      "to": "ui",
+      "y": 170,
+      "label": "Scan, Connect"
+    },
+    {
+      "id": "m-connect",
+      "from": "ui",
+      "to": "service",
+      "y": 198,
+      "label": "connect_to(id)"
+    },
+    {
+      "id": "m-transport",
+      "from": "service",
+      "to": "ble",
+      "y": 226,
+      "label": "connect_to(id)"
+    },
+    {
+      "id": "m-discover",
+      "from": "ble",
+      "to": "device",
+      "y": 254,
+      "label": "connect, discover services",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-subscribe",
+      "from": "ble",
+      "to": "device",
+      "y": 282,
+      "label": "subscribe EVT"
+    },
+    {
+      "id": "m-read",
+      "from": "ble",
+      "to": "device",
+      "y": 310,
+      "label": "read INFO"
+    },
+    {
+      "id": "m-info",
+      "from": "device",
+      "to": "ble",
+      "y": 338,
+      "label": "capability JSON",
+      "variant": "return"
+    },
+    {
+      "id": "m-ready",
+      "from": "ble",
+      "to": "service",
+      "y": 366,
+      "label": "link_ready(info)",
+      "variant": "return"
+    },
+    {
+      "id": "m-build",
+      "from": "service",
+      "to": "ui",
+      "y": 394,
+      "label": "build sliders + actions",
+      "variant": "return"
+    },
+    {
+      "id": "m-drag",
+      "from": "person",
+      "to": "ui",
+      "y": 424,
+      "label": "drag slider"
+    },
+    {
+      "id": "m-set",
+      "from": "ui",
+      "to": "service",
+      "y": 452,
+      "label": "set_channel(ch, v)"
+    },
+    {
+      "id": "m-stream",
+      "from": "service",
+      "to": "device",
+      "y": 480,
+      "label": "SET at 30 Hz",
+      "variant": "emphasis",
+      "note": "write without response; only the newest value is sent"
+    },
+    {
+      "id": "m-ping",
+      "from": "service",
+      "to": "device",
+      "y": 536,
+      "label": "PING every 250 ms",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-pong",
+      "from": "device",
+      "to": "service",
+      "y": 564,
+      "label": "PONG → round-trip time",
+      "variant": "return"
+    },
+    {
+      "id": "m-telemetry",
+      "from": "device",
+      "to": "service",
+      "y": 592,
+      "label": "TELEMETRY 5 Hz",
+      "variant": "return"
+    },
+    {
+      "id": "m-run",
+      "from": "person",
+      "to": "ui",
+      "y": 622,
+      "label": "Transfer & run"
+    },
+    {
+      "id": "m-runtransfer",
+      "from": "ui",
+      "to": "service",
+      "y": 650,
+      "label": "run_transferred(ast)"
+    },
+    {
+      "id": "m-upload",
+      "from": "service",
+      "to": "device",
+      "y": 678,
+      "label": "ROUTINE_BEGIN · CHUNK · END",
+      "variant": "emphasis",
+      "note": "compiled bytecode with CRC-16; writes with response"
+    },
+    {
+      "id": "m-ack",
+      "from": "device",
+      "to": "service",
+      "y": 734,
+      "label": "ACK OK",
+      "variant": "return"
+    },
+    {
+      "id": "m-routinerun",
+      "from": "service",
+      "to": "device",
+      "y": 762,
+      "label": "ROUTINE_RUN",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-state",
+      "from": "device",
+      "to": "service",
+      "y": 790,
+      "label": "ROUTINE_STATE running",
+      "variant": "return"
+    },
+    {
+      "id": "m-disconnect",
+      "from": "person",
+      "to": "ui",
+      "y": 818,
+      "label": "Disconnect"
+    },
+    {
+      "id": "m-drop",
+      "from": "service",
+      "to": "ble",
+      "y": 846,
+      "label": "disconnect, no STOP_ALL",
+      "variant": "security",
+      "note": "Transferred: the device keeps running. Live: the app sends STOP_ALL and the device fails safe after 500 ms"
+    },
+    {
+      "id": "m-cancel",
+      "from": "ble",
+      "to": "device",
+      "y": 916,
+      "label": "cancel connection",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Connect",
+      "items": [
+        "iOS scans by the Gamemote service UUID",
+        "The device's INFO JSON builds the controls"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Live control",
+      "items": [
+        "Values are coalesced, never queued",
+        "PING is both keepalive and latency probe"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Transferred routine",
+      "items": [
+        "Same bytecode as Live mode",
+        "Survives disconnect; STOP_ALL still stops it"
+      ]
+    }
+  ]
+}
