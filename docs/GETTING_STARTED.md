@@ -140,7 +140,9 @@ if something failed.
 | Symptom | Fix |
 |---|---|
 | Xcode: `Undefined symbols … CBCentralManager` | Re-run `build_apple.sh` and export again. If it persists, add *CoreBluetooth.framework* under *Build Phases → Link Binary With Libraries* and report it. |
-| App log: `Bluetooth: missing NSBluetoothAlwaysUsageDescription` | The preset's *Additional Plist Content* was lost. Restore it from the repo's `app/export_presets.cfg` and export again. |
+| App log: `Bluetooth: missing NSBluetoothAlwaysUsageDescription` | The app was exported without the Bluetooth permission text. The `Gamemote iOS export` plugin (*Project → Project Settings → Plugins*, must be enabled) adds it on every iOS export: pull, export again, and check the export log shows `Gamemote iOS export: added Info.plist keys` (or that the preset already had them). |
+| Xcode log: `Could not vibrate using haptic engine: (null)` | Harmless: Godot 4.7.2 prints this after every vibration; `(null)` means no error. |
+| Xcode: `Undefined symbols: _SDL_IsIPad, _SDL_IsAppleTV` | Godot 4.7.x template bug; fixed by our extension. Pull, re-run `build_apple.sh`, export again, Clean Build Folder. |
 | `GM-Sim` not found | Check that Bluetooth is on on the Mac, the terminal has Bluetooth permission (*System Settings → Privacy & Security → Bluetooth*), and the name is ≤ 10 characters. Also try `python tools/gm_cli.py scan` from another computer. |
 | *Bluetooth* is greyed out in the transport menu | The extension binaries weren't found: run `build_apple.sh` (step 2) before exporting. |
 | App stops opening after a week | Free-account installs expire after 7 days. Press Run in Xcode again. |
