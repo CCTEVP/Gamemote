@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "skills": {
+    "scenario-godot-2d": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-2d/SKILL.md",
+      "computedHash": "6e403b20cca7d3a5b9048f9bfa916232ede44299bbee57ff462722c6ba05d522"
+    },
+    "scenario-godot-3d-world": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-3d-world/SKILL.md",
+      "computedHash": "02701197c9517e8b75f538306a8f07af92a9ff1ae55b32ba15b2344ed8a9f8c5"
+    },
+    "scenario-godot-animation": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-animation/SKILL.md",
+      "computedHash": "4e826139d2b97e6e3826def12bd4ec0f6ff97255a20af7c3e4222850fd23f35b"
+    },
+    "scenario-godot-architecture": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-architecture/SKILL.md",
+      "computedHash": "6a4d63779739ea291da3e57ec2142033234be29ae18e6c483c63d6578af6ea3a"
+    },
+    "scenario-godot-audio": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-audio/SKILL.md",
+      "computedHash": "5a243d531fa5b22813c2f28755bc469c288306f26c5e6ff4a3ab4f3a6585c3c0"
+    },
+    "scenario-godot-expert": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-expert/SKILL.md",
+      "computedHash": "0eca7b50246e9a3093d48d4a0e0d061b3bedee056d39841443640bbbcdaeec83"
+    },
+    "scenario-godot-gameplay": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-gameplay/SKILL.md",
+      "computedHash": "6e64646fc79e9e82d3155a28d23408335ef0e017d975a5de7c4555dca3903b2d"
+    },
+    "scenario-godot-multiplayer": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-multiplayer/SKILL.md",
+      "computedHash": "3d1ff568476722396a8c5188e35245cbe81bb9db47d3ebe1baef5033a9350666"
+    },
+    "scenario-godot-performance-export": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-performance-export/SKILL.md",
+      "computedHash": "0c7db7f38ef599c203f985704169a60b7d8c16ea8e05b7fc9847c16cab76f960"
+    },
+    "scenario-godot-pipeline-automation": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-pipeline-automation/SKILL.md",
+      "computedHash": "22498dfde7d91a004d717d1c95fab53cbb3239ab7dfd929f98a642122a332f02"
+    },
+    "scenario-godot-rendering-lighting": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-rendering-lighting/SKILL.md",
+      "computedHash": "a438ab05f26cf5b2734e366bebeaad3b3c15600fa43be7e90e149a67c04e894b"
+    },
+    "scenario-godot-shaders": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-shaders/SKILL.md",
+      "computedHash": "ce51e997a78dd65697e7735c7eb939a6e63765ef409cc2654f2aaec169776b7a"
+    },
+    "scenario-godot-ui": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-ui/SKILL.md",
+      "computedHash": "93d31127e8d366f1fd2defbfc45201864b5d3afd811294da4217a46a586fb6ca"
+    },
+    "scenario-godot-vfx": {
+      "source": "scenario-labs/skills",
+      "ref": "6e4a6f00939102bdccbf7d34a7fa8a3e2d22c8c6",
+      "sourceType": "github",
+      "skillPath": "skills/game-engines/godot/scenario-godot-vfx/SKILL.md",
+      "computedHash": "9da869d001ae777c889e942922c2195f24ac2300b3c17a4d0c2102b45564f363"
+    }
+  }
+}

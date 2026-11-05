@@ -25,6 +25,10 @@ for the first on-device test.
 | `protocol/` | GATT profile, frame format, routine bytecode, shared test vectors |
 | `tools/` | Python reference implementation, BLE device simulator (`gm_sim.py`), CLI client (`gm_cli.py`) |
 
+## Agent skills
+
+`.claude/skills/` holds the [Scenario Godot expert skills](https://github.com/scenario-labs/skills/tree/main/skills/game-engines/godot), pinned to a reviewed commit in `skills-lock.json`. Claude Code loads them automatically in this repo. Update with `npx skills update -p`.
+
 ## Tests
 
 ```bash
