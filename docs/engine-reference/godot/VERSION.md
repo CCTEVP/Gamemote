@@ -2,10 +2,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Engine Version** | Godot 4.7 |
-| **Installed at pin time** | NOT DETERMINED — `/setup-engine` §3 probes the installed editor and records the result here. |
+| **Engine Version** | Godot 4.7.2 |
+| **Installed at pin time** | 4.7.2 on the developer's Mac (from its own run log: `Godot Engine v4.7.2.stable.official.ed1daf0bf`). The cloud session probe found no `godot` on PATH. |
 | **Release Date** | June 2026 (latest patch: 4.7.2, August 2026) |
-| **Project Pinned** | 2026-10-17 |
+| **Project Pinned** | 2026-11-05 |
 | **Last Docs Verified** | 2026-10-17 (release timeline and 4.7 changes); 2026-02-12 (4.4-4.6 content) |
 | **LLM Knowledge Cutoff** | May 2025 |
 

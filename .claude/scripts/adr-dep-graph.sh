@@ -67,7 +67,7 @@ adr_id() {
     printf '%s' "$1" | grep -oiE 'adr-[0-9]+' | head -1 | tr 'A-Z' 'a-z'
 }
 
-adr_files=$(find "$ADR_DIR" -maxdepth 1 -name 'adr-*.md' -type f 2>/dev/null \
+adr_files=$(find -H "$ADR_DIR" -maxdepth 1 -name 'adr-*.md' -type f 2>/dev/null \
             | sed 's|\\|/|g' | sort)
 
 if [ -z "$adr_files" ]; then

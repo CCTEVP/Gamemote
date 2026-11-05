@@ -125,7 +125,7 @@ if [ -z "$FILES" ]; then
   for d in test-results reports Saved/Logs; do
     if [ -d "$d" ]; then
       printf 'scan\t%s\tpresent\n' "$d"
-      FILES="$FILES$(find "$d" -type f \( -name '*.xml' -o -name '*.log' -o -name '*.txt' \) 2>/dev/null)$NL"
+      FILES="$FILES$(find -H "$d" -type f \( -name '*.xml' -o -name '*.log' -o -name '*.txt' \) 2>/dev/null)$NL"
     else
       printf 'scan\t%s\tabsent\n' "$d"
     fi

@@ -261,8 +261,8 @@ next_seen() {
 # files DIR NAME-GLOB [-i] — the files directly in DIR whose name matches, sorted.
 files() {
   [ -d "$1" ] || return 0
-  if [ "${3:-}" = "-i" ]; then find "$1" -maxdepth 1 -type f -iname "$2" | sort
-  else find "$1" -maxdepth 1 -type f -name "$2" | sort; fi
+  if [ "${3:-}" = "-i" ]; then find -H "$1" -maxdepth 1 -type f -iname "$2" | sort
+  else find -H "$1" -maxdepth 1 -type f -name "$2" | sort; fi
 }
 
 if [ "$CMD" = next-id ] && [ "$KIND" != tr ]; then

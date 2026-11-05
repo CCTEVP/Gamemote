@@ -32,3 +32,33 @@ project:
 modes:
   rigor: minimal
   automation: guided
+
+engine:
+  name: "Godot"
+  version: "4.7.2"
+  language: "GDScript"
+  rendering: "Mobile"
+  physics: "[TO BE CONFIGURED]"
+
+specialists:
+  code: "godot-gdscript-specialist"
+  shader: "godot-shader-specialist"
+  ui: "godot-specialist"
+  additional: ["godot-gdextension-specialist"]
+
+naming:
+  classes: PascalCase
+  variables: snake_case
+  constants: SCREAMING_SNAKE
+  signals: past_tense
+  files: snake_case
+  scenes: snake_case
+
+commands:
+  # TODO: godot is not on PATH in the cloud session; on your Mac set the editor's full path
+  # via /settings (e.g. /Applications/Godot.app/Contents/MacOS/Godot). The Godot project is app/.
+  # build: the iOS preset exports an Xcode project; not yet run headless (exports go through the editor).
+  build: "godot --headless --path app --export-debug 'iOS' ../build/ios/Gamemote.ipa"
+  test: "godot --headless --path app -s res://tests/run_tests.gd"
+  run: "godot --path app --windowed --resolution 1688x780"
+  smoke: "godot --headless --path app --quit-after 5"

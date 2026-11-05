@@ -109,7 +109,7 @@ has_content() {
     return
   fi
   [ -d "$1" ] || return 1
-  find "$1" -type f 2>/dev/null | while IFS= read -r f; do
+  find -H "$1" -type f 2>/dev/null | while IFS= read -r f; do
     if grep -q '[^[:space:]]' "$f" 2>/dev/null; then echo y; break; fi
   done | grep -q y
 }
@@ -124,7 +124,7 @@ glob_matches() {
            if (index($i, "*") || index($i, "?") || index($i, "[")) break
            b = (b == "") ? $i : b "/" $i } print (b == "") ? "." : b }')
   [ -d "$base" ] || return 0
-  find "$base" -type "$type" 2>/dev/null | GLOB="$g" awk '
+  find -H "$base" -type "$type" 2>/dev/null | GLOB="$g" awk '
     function g2re(g,    i, n, c, j, cls, out) {
       out = "^"; n = length(g); i = 1
       while (i <= n) {
@@ -178,8 +178,8 @@ $matches
 EOF
   # A plain folder spec counts the files inside it, not the folder itself.
   if [ -d "$matches" ] && [ "$matches" = "${pat%/}" ]; then
-    count=$(find "$matches" -type f 2>/dev/null | wc -l | tr -d ' ')
-    first=$(find "$matches" -type f 2>/dev/null | sort | head -1)
+    count=$(find -H "$matches" -type f 2>/dev/null | wc -l | tr -d ' ')
+    first=$(find -H "$matches" -type f 2>/dev/null | sort | head -1)
   fi
   if [ "$status" = FOUND ]; then NF_=$((NF_ + 1)); else NE=$((NE + 1)); fi
   ROWS="$ROWS$status$TAB$spec$TAB$count$TAB${first:--}$NL"

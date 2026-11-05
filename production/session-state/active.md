@@ -15,5 +15,7 @@ Read this first after a compaction, crash or `/clear`.
 
 ## Current step
 
-`/start` done (stage Concept). Next: `/project-stage-detect`, then `/adopt`, `/setup-engine`,
-`/reverse-document design app` to write `design/game-brief.md` with the two modes above.
+`/start`, `/project-stage-detect` and `/setup-engine godot 4.7` done: Godot 4.7.2, GDScript,
+Mobile renderer, our own test runner, `src -> app` link (framework scans patched with `find -H`).
+Next: `/adopt`, then `/reverse-document design app` to write `design/game-brief.md` with the
+two modes above.

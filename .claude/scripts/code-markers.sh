@@ -98,7 +98,7 @@ while IFS= read -r p; do
   [ -n "$p" ] || continue
   # A Windows path's backslashes as slashes, so its file names read alike.
   case "$p" in [A-Za-z]:\\*) p=$(printf '%s' "$p" | sed 's|\\|/|g') ;; esac
-  LIST="$LIST$(find "$p" -type f \( -name '*.gd' -o -name '*.cs' -o -name '*.cpp' -o -name '*.cc' -o -name '*.c' \
+  LIST="$LIST$(find -H "$p" -type f \( -name '*.gd' -o -name '*.cs' -o -name '*.cpp' -o -name '*.cc' -o -name '*.c' \
     -o -name '*.h' -o -name '*.hpp' -o -name '*.rs' -o -name '*.py' -o -name '*.js' -o -name '*.ts' \
     -o -name '*.lua' -o -name '*.java' -o -name '*.kt' \) 2>/dev/null)$NL"
 done <<EOF

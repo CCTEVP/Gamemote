@@ -101,7 +101,7 @@ else
     [ -n "$d" ] || continue
     # A Windows path's backslashes as slashes, so its file names read alike.
     case "$d" in [A-Za-z]:\\*) d=$(printf '%s' "$d" | sed 's|\\|/|g') ;; esac
-    LIST="$LIST$(find "${d%/}" -type f -iname 'bug-[0-9]*.md' 2>/dev/null)$NL"
+    LIST="$LIST$(find -H "${d%/}" -type f -iname 'bug-[0-9]*.md' 2>/dev/null)$NL"
   done <<EOF
 $DIRS
 EOF

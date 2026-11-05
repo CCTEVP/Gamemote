@@ -262,7 +262,7 @@ fi
 printf 'root\t%s\tpresent\n' "$ROOTDIR"
 
 # --------------------------------------------------------------------- listing
-ALLF=$(find "$ROOTDIR" -type f 2>/dev/null | sort)
+ALLF=$(find -H "$ROOTDIR" -type f 2>/dev/null | sort)
 CLASS=$(printf '%s\n' "$ALLF" | ENG="$ENG" CATF="$CATF" awk '
   BEGIN { BINMODE = 3; eng = ENVIRON["ENG"]; catf = ENVIRON["CATF"] }
   length($0) > 0 {

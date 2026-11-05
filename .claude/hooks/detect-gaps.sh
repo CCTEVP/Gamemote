@@ -86,7 +86,7 @@ fi
 # does not need the engine to be known.
 for _root in src Assets Source; do
   [ -d "$_root" ] || continue
-  SRC_CHECK=$(find "$_root" -type f \( -name "*.gd" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.rs" -o -name "*.py" -o -name "*.js" -o -name "*.ts" \) 2>/dev/null | head -1)
+  SRC_CHECK=$(find -H "$_root" -type f \( -name "*.gd" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.rs" -o -name "*.py" -o -name "*.js" -o -name "*.ts" \) 2>/dev/null | head -1)
   if [ -n "$SRC_CHECK" ]; then
     FRESH_PROJECT=false
     break
@@ -196,7 +196,7 @@ fi
 # --- Check 1: Substantial codebase but sparse design docs ---
 if [ -n "$CODE_ROOT" ] && [ -d "$CODE_ROOT" ]; then
   # Count source files (cross-platform, handles Windows paths)
-  SRC_FILES=$(find "$CODE_ROOT" -type f \( -name "*.gd" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.rs" -o -name "*.py" -o -name "*.js" -o -name "*.ts" \) 2>/dev/null | wc -l)
+  SRC_FILES=$(find -H "$CODE_ROOT" -type f \( -name "*.gd" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" -o -name "*.rs" -o -name "*.py" -o -name "*.js" -o -name "*.ts" \) 2>/dev/null | wc -l)
 else
   SRC_FILES=0
 fi
@@ -269,13 +269,13 @@ fi
 # --- Check 4: Gameplay systems without design docs ---
 if [ "$DOC_CHECKS" = true ] && [ -n "$CODE_ROOT" ] && [ -d "$CODE_ROOT/gameplay" ]; then
   # Find major gameplay subdirectories (those with 5+ files)
-  GAMEPLAY_SYSTEMS=$(find "$CODE_ROOT/gameplay" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+  GAMEPLAY_SYSTEMS=$(find -H "$CODE_ROOT/gameplay" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
 
   if [ -n "$GAMEPLAY_SYSTEMS" ]; then
     while IFS= read -r system_dir; do
       system_dir=$(echo "$system_dir" | sed 's|\\|/|g')
       system_name=$(basename "$system_dir")
-      file_count=$(find "$system_dir" -type f 2>/dev/null | wc -l)
+      file_count=$(find -H "$system_dir" -type f 2>/dev/null | wc -l)
       file_count=$(echo "$file_count" | tr -d ' ')
 
       # If system has 5+ files, check for corresponding design doc

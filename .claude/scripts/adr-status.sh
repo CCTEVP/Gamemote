@@ -90,7 +90,7 @@ TEMPLATE=".claude/docs/templates/architecture-decision-record.md"
 adr_id() { printf '%s\n' "${1##*/}" | tr '[:upper:]' '[:lower:]' | grep -oE 'adr-[0-9]+' | head -1; }
 
 FILES=""; MISSED=""; SCOPE="$ADR_DIR/adr-*.md"
-ALL=$(find "$ADR_DIR" -maxdepth 1 -type f -name 'adr-*.md' 2>/dev/null | sort)
+ALL=$(find -H "$ADR_DIR" -maxdepth 1 -type f -name 'adr-*.md' 2>/dev/null | sort)
 # add_file PATH — onto FILES unless that file is there already, under any
 # spelling (-ef: the same file, whether named by ID, ./path or absolute path).
 add_file() {

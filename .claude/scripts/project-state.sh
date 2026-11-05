@@ -132,7 +132,7 @@ fi
 count() {
   local d="$1"; shift
   [ -d "$d" ] || { echo 0; return; }
-  find "$d" "$@" 2>/dev/null | wc -l | tr -d ' '
+  find -H "$d" "$@" 2>/dev/null | wc -l | tr -d ' '
 }
 
 # --- engine and code root: resolve_code_root's three steps -----------------
