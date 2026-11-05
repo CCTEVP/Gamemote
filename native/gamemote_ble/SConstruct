@@ -24,6 +24,9 @@ if platform in ("macos", "ios"):
     objc_env.Append(CCFLAGS=["-fobjc-arc", "-fmodules", "-fcxx-modules"])
     build_obj = objc_env.SharedObject if platform == "macos" else objc_env.StaticObject
     sources += build_obj("src/ble_backend_apple.mm")
+    if platform == "ios":
+        # Godot 4.7.x iOS templates miss two SDL symbols; see src/ios_sdl_compat.mm.
+        sources += build_obj("src/ios_sdl_compat.mm")
 else:
     sources.append(File("src/ble_backend_stub.cpp"))
 
