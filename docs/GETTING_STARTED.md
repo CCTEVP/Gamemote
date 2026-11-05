@@ -101,6 +101,19 @@ in Xcode. With the real Team ID in the preset, you don't need to re-select the t
 
 ## 7. What to test (tracer bullet checklist)
 
+The app opens on the **3D table**: a clay gamepad on the left (stick, face buttons, STOP) and the
+routine board on the right. Press **Connect** in the top bar to connect to the first device found.
+*Classic view* switches to the original test screen, which the checklist below still uses;
+*Table view* there brings you back.
+
+| On the table | Expected |
+|---|---|
+| Push the stick up / right | Servo / Motor follow in the simulator terminal; the stick tilts and springs back on release |
+| Hold the stick and press LED with a second finger | Both work at once (multitouch); LED goes off on release |
+| Drag a palette tile under the chain | It snaps in; tap it to change its value; drag it back to the palette to delete |
+| ▶ Live / ⇪ Transfer | The routine runs; the running block glows |
+
+
 With `gm_sim.py` running on the Mac:
 
 | # | Do this on the iPhone/iPad | Expected |

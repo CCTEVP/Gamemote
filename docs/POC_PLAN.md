@@ -33,7 +33,8 @@
 | M1 Firmware | ⏸ Waiting for a board choice. The Python simulator implements the same device behaviour. |
 | M2 Native bridge / tracer bullet | 🟡 Built and tested on Linux (stub backend) and in macOS CI. **Waiting for the on-device test** ([checklist](GETTING_STARTED.md#7-what-to-test-tracer-bullet-checklist)). |
 | M3 App core | 🟡 Mostly done: transports (BLE + mock), protocol, DeviceService, auto-reconnect, RTT, both routine modes |
-| M4 Controller UI · M5 Block editor · M6 Hardening | ⏳ Not started |
+| M4 Controller UI · M5 Block editor | 🟡 3D table prototype: orthographic top-down clay gamepad (multitouch, springs, haptics) and snap-together routine blocks (repeat nesting, tap to edit, Live/Transfer) |
+| M6 Hardening | ⏳ Not started |
 
 ---
 

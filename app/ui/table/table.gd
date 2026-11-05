@@ -1,0 +1,388 @@
+extends Node3D
+## The 3D table: a top-down orthographic view of a clay gamepad (live control) and a
+## routine board (snap-together blocks). Touches are projected onto the table plane
+## and routed to whichever object they land on; each finger keeps its owner until it
+## lifts, so the stick and buttons work at the same time.
+
+const CONTENT := Vector2(19.2, 9.6)   # world area that must stay visible (x by z)
+const TILT_DEG := 12.0                # slight tilt so pressed buttons and shadows read
+const TOP_BAR_PT := 52.0
+
+var camera: Camera3D
+var gamepad: Gamepad3D
+var board: BlockBoard
+var _owners := {}            # touch index -> "pad" | "board"
+var _status: Label
+var _connect: Button
+var _auto_connect := false
+var _bindings := {"x": -1, "y": -1, "buttons": [{}, {}, {}, {}]}
+
+
+func _ready() -> void:
+	_build_world()
+	_build_overlay()
+	Device.state_changed.connect(_on_state)
+	Device.info_changed.connect(_on_info)
+	Device.devices_changed.connect(_on_devices)
+	Device.routine_changed.connect(_on_routine)
+	gamepad.stick_changed.connect(_on_stick)
+	gamepad.button_changed.connect(_on_button)
+	gamepad.stop_pressed.connect(_on_stop)
+	board.run_requested.connect(_on_run)
+	get_viewport().size_changed.connect(_fit_camera)
+	_fit_camera()
+	if Device.is_ready():
+		_on_info(Device.info)
+	_on_state(Device.state)
+
+
+# ------------------------------------------------------------------ world
+
+func _build_world() -> void:
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Clay.TABLE
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("fff4e8")
+	env.ambient_light_energy = 0.38
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	var we := WorldEnvironment.new()
+	we.environment = env
+	add_child(we)
+
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-55, -35, 0)
+	sun.light_energy = 0.17  # Godot diffuse carries a ~pi factor: 0.17 is a full sun here
+	sun.light_color = Color("fff1de")
+	sun.shadow_enabled = true
+	sun.shadow_blur = 2.5
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 40.0
+	add_child(sun)
+
+	var table := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(60, 40)
+	table.mesh = plane
+	table.material_override = Clay.mat(Clay.TABLE, 1.0)
+	add_child(table)
+
+	camera = Camera3D.new()
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.rotation_degrees = Vector3(-90 + TILT_DEG, 0, 0)
+	camera.near = 0.1
+	camera.far = 100.0
+	add_child(camera)
+
+	gamepad = Gamepad3D.new()
+	gamepad.position = Vector3(-5.0, 0, 0.25)
+	gamepad.scale = Vector3.ONE * 1.18
+	add_child(gamepad)
+
+	board = BlockBoard.new()
+	board.position = Vector3(3.75, 0, 0.1)
+	add_child(board)
+
+
+## Keeps CONTENT visible on any aspect ratio (iPhone wide, iPad 4:3), below the top bar.
+func _fit_camera() -> void:
+	var size := get_viewport().get_visible_rect().size
+	if size.y <= 0:
+		return
+	var bar := TOP_BAR_PT / size.y          # fraction of the height used by the top bar
+	var usable := size.y * (1.0 - bar)
+	var aspect := size.x / usable
+	var need_h := CONTENT.y
+	if aspect < CONTENT.x / CONTENT.y:
+		need_h = CONTENT.x / aspect
+	var full_h := need_h / (1.0 - bar)
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT
+	camera.size = full_h
+	# Look at the content centre, shifted up so it sits below the bar.
+	var shift := full_h * bar * 0.5
+	var tilt := deg_to_rad(TILT_DEG)
+	var dist := 30.0
+	camera.position = Vector3(0, dist * cos(tilt), -shift + dist * sin(tilt))
+
+
+## Screen point -> point on the table plane (y = 0.4, about the height of the controls).
+func screen_to_table(pos: Vector2) -> Vector3:
+	var origin := camera.project_ray_origin(pos)
+	var dir := camera.project_ray_normal(pos)
+	var hit = Plane(Vector3.UP, 0.4).intersects_ray(origin, dir)
+	return hit if hit != null else Vector3.ZERO
+
+
+func table_to_screen(p: Vector3) -> Vector2:
+	return camera.unproject_position(p)
+
+
+# ------------------------------------------------------------------ input
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		var p := screen_to_table(event.position)
+		if event.pressed:
+			if gamepad.try_press(event.index, p):
+				_owners[event.index] = "pad"
+			elif board.try_press(event.index, p):
+				_owners[event.index] = "board"
+			else:
+				return
+		else:
+			match _owners.get(event.index, ""):
+				"pad": gamepad.release(event.index)
+				"board": board.release(event.index, p)
+				_: return
+			_owners.erase(event.index)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and _owners.has(event.index):
+		var p := screen_to_table(event.position)
+		if _owners[event.index] == "pad":
+			gamepad.move(event.index, p)
+		else:
+			board.move(event.index, p)
+		get_viewport().set_input_as_handled()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		if gamepad:
+			gamepad.release_all()
+		_owners.clear()
+
+
+# ------------------------------------------------------------------ overlay
+
+func _build_overlay() -> void:
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m: Array = UiScale.safe_margins()
+	margin.add_theme_constant_override("margin_left", int(m[0]) + 16)
+	margin.add_theme_constant_override("margin_right", int(m[2]) + 16)
+	margin.add_theme_constant_override("margin_top", int(m[1]) + 6)
+	layer.add_child(margin)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+	var title := Label.new()
+	title.text = "Gamemote"
+	title.add_theme_font_size_override("font_size", 19)
+	title.add_theme_color_override("font_color", Clay.INK)
+	row.add_child(title)
+	_status = Label.new()
+	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_status.add_theme_color_override("font_color", Clay.INK.lerp(Clay.TABLE, 0.35))
+	_status.add_theme_font_size_override("font_size", 14)
+	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_status)
+	_connect = _pill_button("Connect", _on_connect_pressed)
+	row.add_child(_connect)
+	row.add_child(_pill_button("Classic view", func(): get_tree().change_scene_to_file("res://ui/main.tscn")))
+
+
+func _pill_button(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, 40)
+	b.focus_mode = Control.FOCUS_NONE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Clay.GRAPE
+	sb.set_corner_radius_all(20)
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	b.add_theme_stylebox_override("normal", sb)
+	var hover := sb.duplicate()
+	hover.bg_color = Clay.GRAPE.lightened(0.15)
+	b.add_theme_stylebox_override("hover", hover)
+	var pressed := sb.duplicate()
+	pressed.bg_color = Clay.PAD_DARK
+	b.add_theme_stylebox_override("pressed", pressed)
+	b.add_theme_color_override("font_color", Clay.INK)
+	b.add_theme_color_override("font_hover_color", Clay.INK)
+	b.pressed.connect(cb)
+	return b
+
+
+func _on_connect_pressed() -> void:
+	if Device.state in [Device.State.READY, Device.State.CONNECTING, Device.State.RECONNECTING]:
+		_auto_connect = false
+		Device.disconnect_device()
+	else:
+		_auto_connect = true
+		Device.start_scan()
+
+
+## Connects to the first device found after pressing Connect.
+func _on_devices(devices: Dictionary) -> void:
+	if _auto_connect and Device.state == Device.State.SCANNING and not devices.is_empty():
+		_auto_connect = false
+		Device.connect_to(devices.keys()[0])
+
+
+func _on_state(state: int) -> void:
+	var text: String = Device.STATE_NAMES[state]
+	if state == Device.State.READY:
+		text = "Connected to %s" % Device.info.get("name", "device")
+	elif state == Device.State.IDLE and Device.transport.get_kind() == "mock":
+		text = "Idle (mock device)"
+	_status.text = text
+	_connect.text = "Disconnect" if state in [Device.State.READY, Device.State.CONNECTING, Device.State.RECONNECTING] else "Connect"
+	_connect.disabled = state == Device.State.OFF
+	if state != Device.State.READY:
+		gamepad.release_all()
+	_update_run_buttons()
+
+
+# ------------------------------------------------------------------ bindings
+
+## Maps the device's channels and actions onto the pad:
+## stick x -> first "speed" channel, stick y -> first "angle" channel,
+## top button -> first action, right button -> first "level" channel while held,
+## bottom/left -> further actions.
+func _on_info(info: Dictionary) -> void:
+	var channels: Array = info.get("channels", [])
+	var actions: Array = info.get("actions", [])
+	_bindings = {"x": _first_channel(channels, "speed"), "y": _first_channel(channels, "angle"),
+			"buttons": [{}, {}, {}, {}]}
+	if actions.size() > 0:
+		_bindings.buttons[0] = {"action": actions[0]}
+	var level := _first_channel(channels, "level")
+	if level >= 0:
+		_bindings.buttons[1] = {"hold": _channel(level)}
+	if actions.size() > 1:
+		_bindings.buttons[2] = {"action": actions[1]}
+	if actions.size() > 2:
+		_bindings.buttons[3] = {"action": actions[2]}
+	for i in 4:
+		var b: Dictionary = _bindings.buttons[i]
+		var text := ""
+		if b.has("action"):
+			text = String(b.action.name)
+		elif b.has("hold"):
+			text = String(b.hold.name)
+		gamepad.set_button(i, text, not b.is_empty())
+	board.set_info(info)
+	if board.is_empty():
+		_seed_routine(info)
+	_update_run_buttons()
+
+
+func _first_channel(channels: Array, kind: String) -> int:
+	for c in channels:
+		if c.get("kind") == kind:
+			return int(c.id)
+	return -1
+
+
+func _channel(id: int) -> Dictionary:
+	for c in Device.info.get("channels", []):
+		if int(c.id) == id:
+			return c
+	return {}
+
+
+## Axis value in [-1, 1] -> channel value around its neutral.
+func _axis_value(c: Dictionary, v: float) -> int:
+	var neutral := float(c.neutral)
+	if v >= 0.0:
+		return int(round(neutral + v * (float(c.max) - neutral)))
+	return int(round(neutral + v * (neutral - float(c.min))))
+
+
+func _on_stick(v: Vector2) -> void:
+	if not Device.is_ready() or Device.run_mode == Device.RunMode.TRANSFER:
+		return
+	if _bindings.x >= 0:
+		Device.set_channel(_bindings.x, _axis_value(_channel(_bindings.x), v.x))
+	if _bindings.y >= 0:
+		Device.set_channel(_bindings.y, _axis_value(_channel(_bindings.y), v.y))
+
+
+func _on_button(i: int, pressed: bool) -> void:
+	if not Device.is_ready():
+		return
+	var b: Dictionary = _bindings.buttons[i]
+	if b.has("action") and pressed:
+		var params := []
+		for p in b.action.get("params", []):
+			params.append(int(p.get("default", p.get("min", 0))))
+		Device.trigger(int(b.action.id), params)
+	elif b.has("hold") and Device.run_mode != Device.RunMode.TRANSFER:
+		Device.set_channel(int(b.hold.id), int(b.hold.max) if pressed else int(b.hold.neutral))
+
+
+func _on_stop() -> void:
+	if Device.is_ready():
+		Device.stop_routine()
+		Device.stop_all()
+	board.set_highlight(null)
+
+
+# ------------------------------------------------------------------ routines
+
+## A first routine so the board is never empty: wave the angle channel, then an action.
+func _seed_routine(info: Dictionary) -> void:
+	var angle := _first_channel(info.get("channels", []), "angle")
+	if angle < 0:
+		return
+	var c := _channel(angle) if Device.is_ready() else {}
+	for ch in info.get("channels", []):
+		if int(ch.id) == angle:
+			c = ch
+	var rep := board.add_block({"op": "repeat", "times": 3, "body": []})
+	board.add_block({"op": "set", "ch": angle, "value": int(c.max)}, rep)
+	board.add_block({"op": "wait", "ms": 500}, rep)
+	board.add_block({"op": "set", "ch": angle, "value": int(c.min)}, rep)
+	board.add_block({"op": "wait", "ms": 500}, rep)
+	var actions: Array = info.get("actions", [])
+	if not actions.is_empty():
+		var params := []
+		for p in actions[0].get("params", []):
+			params.append(int(p.get("default", p.get("min", 0))))
+		board.add_block({"op": "trigger", "action": int(actions[0].id), "params": params})
+
+
+func _update_run_buttons() -> void:
+	var ready := Device.is_ready()
+	var busy: bool = Device.run_mode != Device.RunMode.NONE
+	board.set_run_enabled(ready and not busy, ready and not busy and Device.supports_transfer(), ready and busy)
+	if not ready:
+		board.set_status("Connect to run routines")
+	elif not busy:
+		board.set_status("Tap a block to change it · drag to the palette to delete")
+
+
+func _on_run(mode: String) -> void:
+	match mode:
+		"live":
+			var err: String = Device.run_live(board.to_ast())
+			if err != "":
+				board.set_status("Error: " + err)
+		"transfer":
+			board.set_status("Uploading…")
+			var err: String = await Device.run_transferred(board.to_ast())
+			board.set_status(("Error: " + err) if err != "" else "Running on the device")
+		"stop":
+			Device.stop_routine()
+			board.set_highlight(null)
+	_update_run_buttons()
+
+
+func _on_routine(mode: int, state: int, block_id: Variant) -> void:
+	var where := "in the app" if mode == Device.RunMode.LIVE else "on the device"
+	match state:
+		GmProtocol.RS_RUNNING:
+			board.set_highlight(block_id)
+			board.set_status("Running %s" % where)
+		GmProtocol.RS_FINISHED, GmProtocol.RS_STOPPED:
+			board.set_highlight(null)
+			board.set_status("Finished %s" % where if state == GmProtocol.RS_FINISHED else "Stopped")
+		GmProtocol.RS_ERROR:
+			board.set_highlight(null)
+			board.set_status("Error on the device")
+	_update_run_buttons()

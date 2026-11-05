@@ -25,6 +25,7 @@ func _run() -> void:
 	await _test_extension()
 	await _test_device_service()
 	await _test_main_ui()
+	await _test_table()
 	print("\n%d passed, %d failed" % [_passes, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -340,4 +341,108 @@ func _test_main_ui() -> void:
 	await process_frame
 	_check(not ui._controls_box.visible, "controls hidden after disconnect")
 	ui.queue_free()
+	await process_frame
+
+
+# ------------------------------------------------------------------ 3D table (real touch events)
+
+func _touch(index: int, pos: Vector2, pressed: bool) -> void:
+	var e := InputEventScreenTouch.new()
+	e.index = index
+	e.position = pos
+	e.pressed = pressed
+	root.push_input(e, true)
+
+
+func _drag_to(index: int, pos: Vector2) -> void:
+	var e := InputEventScreenDrag.new()
+	e.index = index
+	e.position = pos
+	root.push_input(e, true)
+
+
+func _test_table() -> void:
+	_context = "3d table"
+	var device: Node = root.get_node("Device")
+	device.use_transport("mock")
+	var table: Node3D = load("res://ui/table/table.tscn").instantiate()
+	root.add_child(table)
+	await process_frame
+	await process_frame
+	table._on_connect_pressed()
+	_check(await _wait_until(func(): return device.is_ready(), 3000), "Connect auto-connects to the first device")
+	await process_frame
+	var mock: GmMockTransport = device.transport
+	var pad: Gamepad3D = table.gamepad
+	var board: BlockBoard = table.board
+
+	# Screen <-> table mapping round-trips.
+	var stick: Vector3 = pad.stick_center_world()
+	var stick_px: Vector2 = table.table_to_screen(stick)
+	_check((table.screen_to_table(stick_px) - Vector3(stick.x, 0.4, stick.z)).length() < 0.3, "screen to table mapping")
+
+	# Stick up (towards screen top) -> angle channel to max.
+	_touch(0, stick_px, true)
+	_drag_to(0, table.table_to_screen(stick + Vector3(0, 0, -1.2)))
+	_check(await _wait_until(func(): return mock.device.values[2] == 180, 1000), "stick up drives Servo to max")
+	# Second finger holds the right button (LED momentary) while the stick is held.
+	var led_px: Vector2 = table.table_to_screen(pad.button_center_world(1))
+	_touch(1, led_px, true)
+	_check(await _wait_until(func(): return mock.device.values[1] == 255, 1000), "second finger holds LED on (multitouch)")
+	_check(mock.device.values[2] == 180, "stick still held during second touch")
+	_touch(1, led_px, false)
+	_touch(0, table.table_to_screen(stick + Vector3(0, 0, -1.2)), false)
+	_check(await _wait_until(func(): return mock.device.values[1] == 0 and mock.device.values[2] == 90, 1000),
+			"releasing both returns channels to neutral")
+
+	# The board starts with a seeded routine that compiles.
+	_check(board.chain.size() == 2, "seeded routine: repeat + action")
+	_check(GmRoutine.compile(board.to_ast()).ok, "board compiles")
+
+	# Drag a Wait tile from the palette into the end of the chain.
+	var palette_wait := -1
+	for i in board._palette.size():
+		if board._palette[i].proto.op == "wait":
+			palette_wait = i
+	var before: int = board.chain.size()
+	var target: Vector3 = board.slot_world("", before)
+	_touch(0, table.table_to_screen(board.palette_center_world(palette_wait)), true)
+	_drag_to(0, table.table_to_screen(target + Vector3(0, 0.4, 0)))
+	_touch(0, table.table_to_screen(target + Vector3(0, 0.4, 0)), false)
+	await process_frame
+	_eq(board.chain.size(), before + 1, "palette drag snaps a new block at the end")
+	var new_id: String = board.chain[-1]
+	_eq(board.blocks[new_id].op, "wait", "snapped block is a Wait")
+
+	# Tap it: 500 ms -> 1000 ms.
+	var block_px: Vector2 = table.table_to_screen(board.block_center_world(new_id))
+	_touch(0, block_px, true)
+	_touch(0, block_px, false)
+	await process_frame
+	_eq(board.blocks[new_id].ms, 1000, "tap cycles the Wait value")
+
+	# Drag it back onto the palette: deleted.
+	_touch(0, block_px, true)
+	_drag_to(0, table.table_to_screen(board.palette_center_world(0)))
+	_touch(0, table.table_to_screen(board.palette_center_world(0)), false)
+	await process_frame
+	_eq(board.chain.size(), before, "dragging to the palette deletes")
+
+	# Run live from the 3D button; the running block glows, then it finishes.
+	var live_px: Vector2 = table.table_to_screen(board.run_button_world("live"))
+	_touch(0, live_px, true)
+	_touch(0, live_px, false)
+	_check(await _wait_until(func(): return board._highlight != null, 1500), "running block is highlighted")
+	_check(await _wait_until(func(): return device.run_mode == device.RunMode.NONE, 6000), "live routine finishes")
+
+	# STOP on the pad neutralises everything.
+	device.set_channel(3, 60)
+	await _wait_until(func(): return mock.device.values[3] == 60, 1000)
+	var stop_px: Vector2 = table.table_to_screen(pad.button_center_world(-1))
+	_touch(0, stop_px, true)
+	_touch(0, stop_px, false)
+	_check(await _wait_until(func(): return mock.device.values[3] == 0, 1000), "STOP button neutralises")
+
+	device.disconnect_device()
+	table.queue_free()
 	await process_frame

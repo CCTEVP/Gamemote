@@ -13,7 +13,7 @@ config_version=5
 config/name="Gamemote"
 config/description="Remote control for Bluetooth LE devices: live controller and routines."
 config/version="0.1.0"
-run/main_scene="res://ui/main.tscn"
+run/main_scene="res://ui/table/table.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 run/low_processor_mode=true
 config/icon="res://icon.svg"
@@ -30,6 +30,10 @@ window/size/viewport_height=640
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
 
 [rendering]
 
