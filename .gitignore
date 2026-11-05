@@ -19,3 +19,6 @@ native/gamemote_ble/src/gen/
 
 # Archify working folders (finalized diagrams are copied to docs/diagrams/)
 .archify/
+
+# Claude Code Game Studios: per-developer settings
+project.local.yaml
