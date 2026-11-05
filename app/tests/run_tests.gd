@@ -443,6 +443,28 @@ func _test_table() -> void:
 	_touch(0, stop_px, false)
 	_check(await _wait_until(func(): return mock.device.values[3] == 0, 1000), "STOP button neutralises")
 
+	# Drag on empty table: the camera turns; released, it springs back to top-down.
+	var rest: Transform3D = table.camera.global_transform
+	var empty_px: Vector2 = table.table_to_screen(Vector3(-0.5, 0.4, -4.0))
+	_touch(0, empty_px, true)
+	var drag := InputEventScreenDrag.new()
+	drag.index = 0
+	drag.position = empty_px + Vector2(120, -80)
+	drag.relative = Vector2(120, -80)
+	root.push_input(drag, true)
+	await process_frame
+	_check(table.is_peeking(), "dragging empty space turns the camera")
+	_check(table.camera.global_transform.origin.distance_to(rest.origin) > 3.0, "camera moved while peeking")
+	_eq(mock.device.values[2], 90, "peeking does not touch the device")
+	_touch(0, empty_px + Vector2(120, -80), false)
+	_check(await _wait_until(func(): return not table.is_peeking(), 3000), "view returns to top-down after release")
+	_check(table.camera.global_transform.origin.distance_to(rest.origin) < 0.05, "camera back at its resting position")
+	var stick_top: Vector2 = table.table_to_screen(pad.stick_center_world() + Vector3(0, 0, -1.2))
+	_touch(0, table.table_to_screen(pad.stick_center_world()), true)
+	_drag_to(0, stick_top)
+	_check(await _wait_until(func(): return mock.device.values[2] == 180, 1000), "stick works again after peeking")
+	_touch(0, stick_top, false)
+
 	device.disconnect_device()
 	table.queue_free()
 	await process_frame

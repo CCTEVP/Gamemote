@@ -7,11 +7,21 @@ extends Node3D
 const CONTENT := Vector2(19.2, 9.6)   # world area that must stay visible (x by z)
 const TILT_DEG := 12.0                # slight tilt so pressed buttons and shadows read
 const TOP_BAR_PT := 52.0
+const ORBIT_YAW_PER_PT := 0.45        # degrees of turn per point dragged sideways
+const ORBIT_PITCH_PER_PT := 0.35      # degrees of tilt per point dragged up/down
+const ORBIT_MIN_ELEVATION := 28.0     # lowest camera angle above the table while peeking
+const CAMERA_DISTANCE := 30.0
 
 var camera: Camera3D
 var gamepad: Gamepad3D
 var board: BlockBoard
-var _owners := {}            # touch index -> "pad" | "board"
+var _owners := {}            # touch index -> "pad" | "board" | "orbit"
+var _look_at := Vector3.ZERO
+var _yaw := 0.0              # degrees around the table's vertical axis
+var _elevation := 90.0 - TILT_DEG
+var _yaw_vel := 0.0
+var _elevation_vel := 0.0
+var _orbiting := false
 var _status: Label
 var _connect: Button
 var _auto_connect := false
@@ -69,7 +79,6 @@ func _build_world() -> void:
 
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.rotation_degrees = Vector3(-90 + TILT_DEG, 0, 0)
 	camera.near = 0.1
 	camera.far = 100.0
 	add_child(camera)
@@ -99,10 +108,45 @@ func _fit_camera() -> void:
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = full_h
 	# Look at the content centre, shifted up so it sits below the bar.
-	var shift := full_h * bar * 0.5
-	var tilt := deg_to_rad(TILT_DEG)
-	var dist := 30.0
-	camera.position = Vector3(0, dist * cos(tilt), -shift + dist * sin(tilt))
+	_look_at = Vector3(0, 0, -full_h * bar * 0.5)
+	_apply_camera()
+
+
+## Places the camera on a sphere around the content centre (yaw, elevation in degrees).
+func _apply_camera() -> void:
+	var el := deg_to_rad(_elevation)
+	var yaw := deg_to_rad(_yaw)
+	var offset := Vector3(sin(yaw) * cos(el), sin(el), cos(yaw) * cos(el)) * CAMERA_DISTANCE
+	camera.position = _look_at + offset
+	camera.look_at(_look_at, Vector3.UP)
+
+
+## True while the view is turned away from the resting top-down angle.
+func is_peeking() -> bool:
+	return _orbiting or _yaw != 0.0 or _elevation != 90.0 - TILT_DEG
+
+
+func _near_rest() -> bool:
+	return absf(_yaw) < 0.5 and absf(_elevation - (90.0 - TILT_DEG)) < 0.5
+
+
+func _process(delta: float) -> void:
+	if _orbiting or not is_peeking() and absf(_yaw_vel) + absf(_elevation_vel) < 0.01:
+		return
+	# Let go: spring back to the top-down view.
+	delta = minf(delta, 1.0 / 30.0)
+	var y := Clay.spring(_yaw, _yaw_vel, 0.0, delta, 90.0, 13.0)
+	var e := Clay.spring(_elevation, _elevation_vel, 90.0 - TILT_DEG, delta, 90.0, 13.0)
+	_yaw = y.x
+	_yaw_vel = y.y
+	_elevation = e.x
+	_elevation_vel = e.y
+	if _near_rest() and absf(_yaw_vel) + absf(_elevation_vel) < 0.5:
+		_yaw = 0.0
+		_elevation = 90.0 - TILT_DEG
+		_yaw_vel = 0.0
+		_elevation_vel = 0.0
+	_apply_camera()
 
 
 ## Screen point -> point on the table plane (y = 0.4, about the height of the controls).
@@ -127,14 +171,24 @@ func _unhandled_input(event: InputEvent) -> void:
 				_owners[event.index] = "pad"
 			elif board.try_press(event.index, p):
 				_owners[event.index] = "board"
+			elif not _owners.values().has("orbit"):
+				# Empty table: this finger turns the camera to peek at the 3D shapes.
+				_owners[event.index] = "orbit"
+				_orbiting = true
 			else:
 				return
 		else:
 			match _owners.get(event.index, ""):
 				"pad": gamepad.release(event.index)
 				"board": board.release(event.index, p)
+				"orbit": _orbiting = false
 				_: return
 			_owners.erase(event.index)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and _owners.get(event.index) == "orbit":
+		_yaw -= event.relative.x * ORBIT_YAW_PER_PT
+		_elevation = clampf(_elevation + event.relative.y * ORBIT_PITCH_PER_PT, ORBIT_MIN_ELEVATION, 90.0 - TILT_DEG)
+		_apply_camera()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and _owners.has(event.index):
 		var p := screen_to_table(event.position)
@@ -150,6 +204,7 @@ func _notification(what: int) -> void:
 		if gamepad:
 			gamepad.release_all()
 		_owners.clear()
+		_orbiting = false
 
 
 # ------------------------------------------------------------------ overlay

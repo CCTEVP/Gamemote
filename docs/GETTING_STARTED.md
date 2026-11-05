@@ -112,6 +112,7 @@ routine board on the right. Press **Connect** in the top bar to connect to the f
 | Hold the stick and press LED with a second finger | Both work at once (multitouch); LED goes off on release |
 | Drag a palette tile under the chain | It snaps in; tap it to change its value; drag it back to the palette to delete |
 | ▶ Live / ⇪ Transfer | The routine runs; the running block glows |
+| Drag on empty table space | The view turns and tilts to show the 3D shapes; let go and it springs back to top-down |
 
 
 With `gm_sim.py` running on the Mac:
