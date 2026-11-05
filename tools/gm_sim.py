@@ -4,7 +4,7 @@
 Run it on your Mac, then connect to it from the Gamemote app on an iPhone or iPad.
 It stands in for the microcontroller until you have hardware.
 
-    python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
+    python3.12 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
     .venv/bin/python tools/gm_sim.py                 # transfer mode supported
     .venv/bin/python tools/gm_sim.py --no-transfer   # behave like a Live-only board
 

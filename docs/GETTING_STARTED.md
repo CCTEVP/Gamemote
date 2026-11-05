@@ -16,7 +16,7 @@ Gamemote-compatible BLE device.
 | Mac with **Xcode** (current version) | Open Xcode once so it installs its components. |
 | **Godot 4.7.2** (standard, not .NET) | <https://godotengine.org/download>. 4.5 or newer works too. |
 | Godot **export templates** | In Godot: *Editor → Manage Export Templates → Download and Install*. |
-| **Python 3.10+** | Preinstalled on recent macOS, or `brew install python`. |
+| **Python 3.10+** (3.12 recommended) | `brew install python@3.12`. The `python3` that comes with Xcode is 3.9: too old (PyObjC then tries to compile and fails). |
 | iPhone and/or iPad + USB cable | iOS/iPadOS 16+: turn on *Settings → Privacy & Security → Developer Mode* (it restarts the device). |
 | A free **Apple ID** signed in to Xcode | *Xcode → Settings → Accounts → +*. The $99/year program is **not** needed (see the end of this guide). |
 
@@ -62,7 +62,7 @@ That proves the app logic. Bluetooth itself is tested on the phone (steps 4–6)
 ## 4. Start the simulated device on your Mac
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install -r tools/requirements.txt
 .venv/bin/python tools/gm_sim.py
 ```
