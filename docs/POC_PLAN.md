@@ -22,6 +22,7 @@
 | Apple account | **The free Apple ID is enough** for a hobby project (7-day installs). The $99/year program is only needed for TestFlight or the App Store. |
 | Routine modes | **Live** (runs in the app, stops when disconnected) and **Transferred** (uploaded, keeps running on the board if the board supports it). Both are in the PoC and share one bytecode. |
 | Purpose | Hobby, so licensing and security stay light; still avoid BUSL libraries. |
+| App modes | **Two separate modes:** **Live** (the game controller drives the device in real time) and **Routine builder** (stack and edit routines, then run them Live or transfer them). They are distinct screens, not one combined table; the current prototype shows both side by side only for testing. |
 | UI direction | **3D UI** (controller and routine views rendered in 3D). The Scenario Godot expert skills are installed in `.claude/skills/` (pinned in `skills-lock.json`), so agents follow their UI, 3D, lighting, shader and mobile-performance guidance. |
 | Toolchain | Godot **4.7.2**, godot-cpp **10.0.0** (built against the 4.5 API, so it loads in 4.5–4.7), Xcode, Python 3. |
 
