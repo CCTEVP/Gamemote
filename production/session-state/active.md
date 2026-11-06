@@ -15,7 +15,7 @@ Read this first after a compaction, crash or `/clear`.
 
 ## Current step
 
-`/start`, `/project-stage-detect` and `/setup-engine godot 4.7` done: Godot 4.7.2, GDScript,
-Mobile renderer, our own test runner, `src -> app` link (framework scans patched with `find -H`).
-Next: `/adopt`, then `/reverse-document design app` to write `design/game-brief.md` with the
-two modes above.
+`/start`, `/project-stage-detect`, `/setup-engine`, `/adopt` and `/reverse-document design src`
+done. `design/game-brief.md` is the design record: kids/learners, simple visual builder,
+saved routines and soft sounds in the MVP. Next: `/create-stories` from the brief's MVP and
+build order (first story: split the table into Home, Live and Routine builder).
