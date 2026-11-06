@@ -15,7 +15,6 @@ Read this first after a compaction, crash or `/clear`.
 
 ## Current step
 
-`/start`, `/project-stage-detect`, `/setup-engine`, `/adopt` and `/reverse-document design src`
-done. `design/game-brief.md` is the design record: kids/learners, simple visual builder,
-saved routines and soft sounds in the MVP. Next: `/create-stories` from the brief's MVP and
-build order (first story: split the table into Home, Live and Routine builder).
+`/create-stories` done: `production/epics/gamemote/` holds EPIC.md and stories 001 to 007 (one per
+brief MVP feature, in build order). Next: `/dev-story production/epics/gamemote/story-001-home-and-connect.md`
+(split the table into Home, Live and Routine builder).
