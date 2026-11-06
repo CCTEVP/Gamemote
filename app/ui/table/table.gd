@@ -3,8 +3,16 @@ extends Node3D
 ## routine board (snap-together blocks). Touches are projected onto the table plane
 ## and routed to whichever object they land on; each finger keeps its owner until it
 ## lifts, so the stick and buttons work at the same time.
+##
+## `mode` picks what is on the table: "both" (the combined prototype), "live" (only the
+## gamepad) or "builder" (only the block board). Set it before the node enters the tree;
+## the Live and Builder scenes do that in their `_init`.
 
+const HOME_SCENE := "res://ui/home/home.tscn"
 const CONTENT := Vector2(19.2, 9.6)   # world area that must stay visible (x by z)
+const LIVE_CONTENT := Vector2(13.0, 8.0)
+const BUILDER_CONTENT := Vector2(9.0, 9.6)
+const LIVE_PAD_SCALE := 1.9
 const TILT_DEG := 12.0                # slight tilt so pressed buttons and shadows read
 const TOP_BAR_PT := 52.0
 const ORBIT_YAW_PER_PT := 0.45        # degrees of turn per point dragged sideways
@@ -12,9 +20,12 @@ const ORBIT_PITCH_PER_PT := 0.35      # degrees of tilt per point dragged up/dow
 const ORBIT_MIN_ELEVATION := 28.0     # lowest camera angle above the table while peeking
 const CAMERA_DISTANCE := 30.0
 
+## "both" | "live" | "builder". Must be set before the scene enters the tree.
+var mode := "both"
 var camera: Camera3D
-var gamepad: Gamepad3D
-var board: BlockBoard
+var gamepad: Gamepad3D   # null in "builder" mode
+var board: BlockBoard    # null in "live" mode
+var _content := CONTENT
 var _owners := {}            # touch index -> "pad" | "board" | "orbit"
 var _look_at := Vector3.ZERO
 var _yaw := 0.0              # degrees around the table's vertical axis
@@ -34,11 +45,13 @@ func _ready() -> void:
 	Device.state_changed.connect(_on_state)
 	Device.info_changed.connect(_on_info)
 	Device.devices_changed.connect(_on_devices)
-	Device.routine_changed.connect(_on_routine)
-	gamepad.stick_changed.connect(_on_stick)
-	gamepad.button_changed.connect(_on_button)
-	gamepad.stop_pressed.connect(_on_stop)
-	board.run_requested.connect(_on_run)
+	if gamepad:
+		gamepad.stick_changed.connect(_on_stick)
+		gamepad.button_changed.connect(_on_button)
+		gamepad.stop_pressed.connect(_on_stop)
+	if board:
+		Device.routine_changed.connect(_on_routine)
+		board.run_requested.connect(_on_run)
 	get_viewport().size_changed.connect(_fit_camera)
 	_fit_camera()
 	if Device.is_ready():
@@ -83,17 +96,28 @@ func _build_world() -> void:
 	camera.far = 100.0
 	add_child(camera)
 
-	gamepad = Gamepad3D.new()
-	gamepad.position = Vector3(-5.0, 0, 0.25)
-	gamepad.scale = Vector3.ONE * 1.18
-	add_child(gamepad)
+	if mode != "builder":
+		gamepad = Gamepad3D.new()
+		if mode == "live":
+			_content = LIVE_CONTENT
+			gamepad.position = Vector3(0, 0, -0.4)
+			gamepad.scale = Vector3.ONE * LIVE_PAD_SCALE
+		else:
+			gamepad.position = Vector3(-5.0, 0, 0.25)
+			gamepad.scale = Vector3.ONE * 1.18
+		add_child(gamepad)
 
-	board = BlockBoard.new()
-	board.position = Vector3(3.75, 0, 0.1)
-	add_child(board)
+	if mode != "live":
+		board = BlockBoard.new()
+		if mode == "builder":
+			_content = BUILDER_CONTENT
+			board.position = Vector3(-0.75, 0, -0.3)
+		else:
+			board.position = Vector3(3.75, 0, 0.1)
+		add_child(board)
 
 
-## Keeps CONTENT visible on any aspect ratio (iPhone wide, iPad 4:3), below the top bar.
+## Keeps the mode's content area visible on any aspect ratio (iPhone wide, iPad 4:3), below the top bar.
 func _fit_camera() -> void:
 	var size := get_viewport().get_visible_rect().size
 	if size.y <= 0:
@@ -101,9 +125,9 @@ func _fit_camera() -> void:
 	var bar := TOP_BAR_PT / size.y          # fraction of the height used by the top bar
 	var usable := size.y * (1.0 - bar)
 	var aspect := size.x / usable
-	var need_h := CONTENT.y
-	if aspect < CONTENT.x / CONTENT.y:
-		need_h = CONTENT.x / aspect
+	var need_h := _content.y
+	if aspect < _content.x / _content.y:
+		need_h = _content.x / aspect
 	var full_h := need_h / (1.0 - bar)
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = full_h
@@ -167,9 +191,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var p := screen_to_table(event.position)
 		if event.pressed:
-			if gamepad.try_press(event.index, p):
+			if gamepad and gamepad.try_press(event.index, p):
 				_owners[event.index] = "pad"
-			elif board.try_press(event.index, p):
+			elif board and board.try_press(event.index, p):
 				_owners[event.index] = "board"
 			elif not _owners.values().has("orbit"):
 				# Empty table: this finger turns the camera to peek at the 3D shapes.
@@ -235,32 +259,32 @@ func _build_overlay() -> void:
 	_status.add_theme_font_size_override("font_size", 14)
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_status)
-	_connect = _pill_button("Connect", _on_connect_pressed)
-	row.add_child(_connect)
-	row.add_child(_pill_button("Classic view", func(): get_tree().change_scene_to_file("res://ui/main.tscn")))
+	if mode == "both":
+		_connect = _pill_button("Connect", _on_connect_pressed)
+		row.add_child(_connect)
+		row.add_child(_pill_button("Classic view", func(): get_tree().change_scene_to_file("res://ui/main.tscn")))
+	else:
+		row.add_child(_pill_button("Back", go_home))
 
 
 func _pill_button(text: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = Vector2(0, 40)
-	b.focus_mode = Control.FOCUS_NONE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Clay.GRAPE
-	sb.set_corner_radius_all(20)
-	sb.content_margin_left = 16
-	sb.content_margin_right = 16
-	b.add_theme_stylebox_override("normal", sb)
-	var hover := sb.duplicate()
-	hover.bg_color = Clay.GRAPE.lightened(0.15)
-	b.add_theme_stylebox_override("hover", hover)
-	var pressed := sb.duplicate()
-	pressed.bg_color = Clay.PAD_DARK
-	b.add_theme_stylebox_override("pressed", pressed)
-	b.add_theme_color_override("font_color", Clay.INK)
-	b.add_theme_color_override("font_hover_color", Clay.INK)
+	var b := Clay.pill_button(text, 40.0)
 	b.pressed.connect(cb)
 	return b
+
+
+## Leaves a mode for Home. Pad inputs are released and the gadget is told to STOP
+## (Live), or an in-app routine is stopped (Builder). The connection is kept, and a
+## routine already Transferred to the device keeps running.
+func go_home() -> void:
+	if gamepad:
+		gamepad.release_all()
+	if Device.is_ready() and Device.run_mode != Device.RunMode.TRANSFER:
+		if mode == "live":
+			Device.stop_all()
+		elif Device.run_mode == Device.RunMode.LIVE:
+			Device.stop_routine()
+	get_tree().change_scene_to_file(HOME_SCENE)
 
 
 func _on_connect_pressed() -> void:
@@ -285,10 +309,13 @@ func _on_state(state: int) -> void:
 		text = "Connected to %s" % Device.info.get("name", "device")
 	elif state == Device.State.IDLE and Device.transport.get_kind() == "mock":
 		text = "Idle (mock device)"
+	elif state == Device.State.RECONNECTING:
+		text = "Connection lost, reconnecting…"
 	_status.text = text
-	_connect.text = "Disconnect" if state in [Device.State.READY, Device.State.CONNECTING, Device.State.RECONNECTING] else "Connect"
-	_connect.disabled = state == Device.State.OFF
-	if state != Device.State.READY:
+	if _connect:
+		_connect.text = "Disconnect" if state in [Device.State.READY, Device.State.CONNECTING, Device.State.RECONNECTING] else "Connect"
+		_connect.disabled = state == Device.State.OFF
+	if state != Device.State.READY and gamepad:
 		gamepad.release_all()
 	_update_run_buttons()
 
@@ -320,10 +347,12 @@ func _on_info(info: Dictionary) -> void:
 			text = String(b.action.name)
 		elif b.has("hold"):
 			text = String(b.hold.name)
-		gamepad.set_button(i, text, not b.is_empty())
-	board.set_info(info)
-	if board.is_empty():
-		_seed_routine(info)
+		if gamepad:
+			gamepad.set_button(i, text, not b.is_empty())
+	if board:
+		board.set_info(info)
+		if board.is_empty():
+			_seed_routine(info)
 	_update_run_buttons()
 
 
@@ -375,7 +404,8 @@ func _on_stop() -> void:
 	if Device.is_ready():
 		Device.stop_routine()
 		Device.stop_all()
-	board.set_highlight(null)
+	if board:
+		board.set_highlight(null)
 
 
 # ------------------------------------------------------------------ routines
@@ -403,6 +433,8 @@ func _seed_routine(info: Dictionary) -> void:
 
 
 func _update_run_buttons() -> void:
+	if not board:
+		return
 	var ready := Device.is_ready()
 	var busy: bool = Device.run_mode != Device.RunMode.NONE
 	board.set_run_enabled(ready and not busy, ready and not busy and Device.supports_transfer(), ready and busy)

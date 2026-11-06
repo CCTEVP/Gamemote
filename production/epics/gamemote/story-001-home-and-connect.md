@@ -56,9 +56,11 @@
 
 ## Files
 
-- `src/ui/home/home.gd`, `src/ui/home/home.tscn` (new)
-- `src/ui/table/table.gd` (split), `src/project.godot` (main scene)
-- `src/tests/run_tests.gd`
+- `src/ui/home/home.gd`, `src/ui/home/home.tscn` (new: Home, connection, mode tiles)
+- `src/ui/live/live_mode.gd`, `src/ui/live/live_mode.tscn` (new: Live mode, pad only)
+- `src/ui/builder/builder_mode.gd`, `src/ui/builder/builder_mode.tscn` (new: Routine builder, board only)
+- `src/ui/table/table.gd` (mode property, Back, framing per mode), `src/ui/table/clay.gd` (shared pill button)
+- `src/ui/main.gd` (Classic view returns to Home), `src/project.godot` (main scene is Home)
 
 ---
 

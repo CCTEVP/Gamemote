@@ -110,3 +110,33 @@ static func spring(pos: float, vel: float, target: float, delta: float,
 	vel *= exp(-damping * delta)
 	pos += vel * delta
 	return Vector2(pos, vel)
+
+
+## A rounded grape pill button (UI overlay), `height` points tall.
+static func pill_button(text: String, height: float = 40.0) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, height)
+	b.focus_mode = Control.FOCUS_NONE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = GRAPE
+	sb.set_corner_radius_all(int(height * 0.5))
+	sb.content_margin_left = 16
+	sb.content_margin_right = 16
+	b.add_theme_stylebox_override("normal", sb)
+	var hover := sb.duplicate()
+	hover.bg_color = GRAPE.lightened(0.15)
+	b.add_theme_stylebox_override("hover", hover)
+	var pressed := sb.duplicate()
+	pressed.bg_color = PAD_DARK
+	b.add_theme_stylebox_override("pressed", pressed)
+	b.add_theme_stylebox_override("hover_pressed", pressed)
+	var off := sb.duplicate()
+	off.bg_color = DISABLED
+	b.add_theme_stylebox_override("disabled", off)
+	b.add_theme_color_override("font_color", INK)
+	b.add_theme_color_override("font_hover_color", INK)
+	b.add_theme_color_override("font_pressed_color", INK)
+	b.add_theme_color_override("font_hover_pressed_color", INK)
+	b.add_theme_color_override("font_disabled_color", INK.lerp(TABLE, 0.45))
+	return b

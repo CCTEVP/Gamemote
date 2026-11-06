@@ -107,7 +107,7 @@ func _build() -> void:
 	_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_state_label.modulate = Color(1, 1, 1, 0.75)
 	header.add_child(_state_label)
-	var table_button := _button("Table view", func(): get_tree().change_scene_to_file("res://ui/table/table.tscn"))
+	var table_button := _button("Home", func(): get_tree().change_scene_to_file("res://ui/home/home.tscn"))
 	header.add_child(table_button)
 
 	var row := HBoxContainer.new()
