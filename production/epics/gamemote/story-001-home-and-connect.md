@@ -1,12 +1,12 @@
 # Story 001: Home and connect, split the app into two modes
 
 > **Epic**: Gamemote
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-11-06
 
 ## Context
 
