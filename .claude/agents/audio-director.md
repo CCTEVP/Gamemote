@@ -2,7 +2,8 @@
 name: audio-director
 description: "Owns sonic identity — music direction, sound palette, audio implementation strategy, mix balance."
 tools: Read, Glob, Grep, Write, Edit, WebSearch
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 disallowedTools: Bash
 memory: project

@@ -2,7 +2,8 @@
 name: release-manager
 description: "Release pipeline — certification checklists, store submissions and page prep, platform requirements, version numbering, release-day coordination."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 skills: [release-checklist, changelog, patch-notes]
 ---

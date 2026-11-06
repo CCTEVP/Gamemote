@@ -2,7 +2,8 @@
 name: technical-artist
 description: "Technical artist bridging art and engineering — shaders, VFX, rendering optimization, art pipeline tools, art-to-engine issues."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 

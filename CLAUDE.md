@@ -27,6 +27,13 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 - Local patch to the vendored framework: every `find "$var"` in `.claude/scripts/` and
   `.claude/hooks/` uses `find -H` so scans follow the `src -> app` link. Re-apply after a
   framework upgrade (`sed -i 's/find "\$/find -H "$/g' .claude/scripts/*.sh .claude/hooks/*.sh`).
+- Local patch, savings-first agent tiers (owner's choice, 2026-11-06): every agent in
+  `.claude/agents/` sets `model:` and `effort:`, overriding `.claude/docs/model-tiers.md`.
+  `opus`/medium: creative-director, technical-director. `sonnet`/high: engine-programmer,
+  network-programmer, godot-gdextension-specialist. `sonnet`/low: qa-tester, writer,
+  community-manager, producer. All others `sonnet`/medium. Re-apply after a framework upgrade.
+  When starting an agent, keep its tier; pass a different `model` only when a task clearly
+  outgrows it (e.g. a second failed attempt on the same task), and say so.
 
 ## Project Structure
 

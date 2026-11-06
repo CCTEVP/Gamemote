@@ -2,7 +2,8 @@
 name: ai-programmer
 description: "Implements game AI — behavior trees, state machines, pathfinding, perception, decision-making, NPC and enemy behavior, AI debugging."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 

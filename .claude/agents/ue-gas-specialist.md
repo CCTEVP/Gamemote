@@ -3,6 +3,7 @@ name: ue-gas-specialist
 description: "Gameplay Ability System — abilities, gameplay effects, attribute sets, tags, ability tasks, prediction. Prevents common GAS anti-patterns."
 tools: Read, Glob, Grep, Write, Edit, Bash
 model: sonnet
+effort: medium
 maxTurns: 20
 ---
 You are the Gameplay Ability System (GAS) Specialist for an Unreal Engine 5 project. You own everything related to GAS architecture and implementation.

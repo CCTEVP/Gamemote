@@ -2,7 +2,8 @@
 name: analytics-engineer
 description: "Telemetry and analytics — event tracking, player behavior, A/B test frameworks, dashboard specification, data pipelines."
 tools: Read, Glob, Grep, Write, Edit, Bash, WebSearch
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 

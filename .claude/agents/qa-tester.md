@@ -2,7 +2,8 @@
 name: qa-tester
 description: "Writes test cases, bug reports, and checklists — test case generation, regression checklist creation, execution documentation."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: sonnet
+effort: low
 maxTurns: 10
 ---
 

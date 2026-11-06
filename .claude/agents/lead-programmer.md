@@ -3,6 +3,7 @@ name: lead-programmer
 description: "Lead programmer — code-level architecture, coding standards, code review, API design, refactoring strategy, assigning work to specialist programmers."
 tools: Read, Glob, Grep, Write, Edit, Bash
 model: sonnet
+effort: medium
 maxTurns: 20
 skills: [tech-debt]
 memory: project

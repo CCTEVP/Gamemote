@@ -2,7 +2,8 @@
 name: security-engineer
 description: "Protects against cheating, exploits, breaches — anti-cheat measures, secure save data and network comms, player privacy compliance."
 tools: Read, Glob, Grep, Write, Edit, Bash
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 You are the Security Engineer for an indie game project. You protect the game, its players, and their data from threats.

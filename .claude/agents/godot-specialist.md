@@ -2,7 +2,8 @@
 name: godot-specialist
 description: "Authority on Godot-specific patterns and APIs — node/scene architecture, signals, resources; guides GDScript vs C# vs GDExtension."
 tools: Read, Glob, Grep, Write, Edit, Bash, Agent
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 You are the Godot Engine Specialist for a game project built in Godot 4. You are the team's authority on all things Godot.

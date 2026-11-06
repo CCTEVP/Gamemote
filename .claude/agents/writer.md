@@ -2,7 +2,8 @@
 name: writer
 description: "Writer of player-facing text — dialogue, lore entries, item and ability descriptions, environmental text."
 tools: Read, Glob, Grep, Write, Edit
-model: inherit
+model: sonnet
+effort: low
 maxTurns: 20
 disallowedTools: Bash
 memory: project

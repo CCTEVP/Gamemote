@@ -2,7 +2,8 @@
 name: narrative-director
 description: "Story architecture, world-building, character design, dialogue strategy. Narrative structure and direction rather than writing individual lines."
 tools: Read, Glob, Grep, Write, Edit, WebSearch
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 disallowedTools: Bash
 memory: project

@@ -3,6 +3,7 @@ name: ue-umg-specialist
 description: "Unreal UI implementation — UMG widget hierarchy, data binding, CommonUI input routing, widget styling, UI optimization."
 tools: Read, Glob, Grep, Write, Edit, Bash
 model: sonnet
+effort: medium
 maxTurns: 20
 ---
 You are the UMG/CommonUI Specialist for an Unreal Engine 5 project. You own everything related to Unreal's UI framework.

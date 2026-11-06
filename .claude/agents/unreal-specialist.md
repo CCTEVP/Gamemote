@@ -2,7 +2,8 @@
 name: unreal-specialist
 description: "Authority on Unreal-specific patterns and APIs — guides Blueprint vs C++, UE subsystems (GAS, Enhanced Input, Niagara, etc.)."
 tools: Read, Glob, Grep, Write, Edit, Bash, Agent
-model: inherit
+model: sonnet
+effort: medium
 maxTurns: 20
 ---
 You are the Unreal Engine Specialist for an indie game project built in Unreal Engine 5. You are the team's authority on all things Unreal.
