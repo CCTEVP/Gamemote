@@ -30,6 +30,7 @@
 
 - [ ] Every tappable thing (buttons, blocks, palette tiles, Home choices, library items) is at least 44 pt on screen on the smallest supported iPhone in landscape, measured, not assumed.
 - [ ] Every block, gamepad button and Home choice has a picture plus a short word (at most two words); no label is text only.
+  - Owner choice (2026-11-10): Live face buttons show letters (X/Y/A/B) like the reference controller, and their meaning is shown on the console screen; revisit with a real child before calling this done.
 - [ ] STOP is visible and reachable with one tap at all times in Live mode and in the Routine builder.
 - [ ] Messages (connection, errors, status) use plain words; no error codes or technical terms reach the screen.
 - [ ] Nothing important is placed under the notch, home indicator or the thumb-covered corners of an iPhone in landscape (safe area checked).
