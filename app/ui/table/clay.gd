@@ -17,6 +17,15 @@ const STOP := Color("f0736d")
 const BUTTER := Color("ffe08a")
 const GRAPE := Color("c7b3f2")
 const DISABLED := Color("d8d2cb")
+## Sideways (Live) handheld look.
+const BODY_GREY := Color("a69c94")      # matte warm-grey clay body
+const BODY_GREY_DARK := Color("8d847d")
+const TEAL := Color("6fb5b8")
+const TEAL_DARK := Color("5a9fa4")
+const ORANGE := Color("f0956a")
+const YELLOW := Color("f2d06a")
+const CORAL := Color("e8776c")
+const STOP_RED := Color("d6322e")
 
 ## Pixel size of Label3D text (world units per font pixel).
 const TEXT_PIXEL := 0.008

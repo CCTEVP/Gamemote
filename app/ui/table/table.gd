@@ -10,9 +10,9 @@ extends Node3D
 
 const HOME_SCENE := "res://ui/home/home.tscn"
 const CONTENT := Vector2(19.2, 9.6)   # world area that must stay visible (x by z)
-const LIVE_CONTENT := Vector2(13.0, 8.0)
+const LIVE_CONTENT := Vector2(15.6, 7.4)
 const BUILDER_CONTENT := Vector2(9.0, 9.6)
-const LIVE_PAD_SCALE := 1.9
+const LIVE_PAD_SCALE := 1.7
 const TILT_DEG := 12.0                # slight tilt so pressed buttons and shadows read
 const TOP_BAR_PT := 52.0
 const ORBIT_YAW_PER_PT := 0.45        # degrees of turn per point dragged sideways
@@ -38,6 +38,7 @@ var _connect: Button
 var _auto_connect := false
 ## Live mode only (null elsewhere): the plain-word console the Live view renders.
 var console: ConsoleLog
+var _console_view: ConsoleView
 var _last_state := -1
 var _bindings := {"x": -1, "y": -1, "buttons": [{}, {}, {}, {}]}
 
@@ -55,6 +56,10 @@ func _ready() -> void:
 		Device.log_added.connect(_on_device_log)
 		Device.telemetry_received.connect(_on_telemetry)
 		Device.routine_changed.connect(_on_routine_console)
+		if gamepad and gamepad.screen_viewport:
+			_console_view = ConsoleView.new()
+			gamepad.screen_viewport.add_child(_console_view)
+			_console_view.setup(console)
 	if gamepad:
 		gamepad.stick_changed.connect(_on_stick)
 		gamepad.button_changed.connect(_on_button)
@@ -110,7 +115,8 @@ func _build_world() -> void:
 		gamepad = Gamepad3D.new()
 		if mode == "live":
 			_content = LIVE_CONTENT
-			gamepad.position = Vector3(0, 0, -0.4)
+			gamepad.layout = Gamepad3D.LAYOUT_SIDEWAYS
+			gamepad.position = Vector3(0, 0, -0.2)
 			gamepad.scale = Vector3.ONE * LIVE_PAD_SCALE
 		else:
 			gamepad.position = Vector3(-5.0, 0, 0.25)
@@ -355,6 +361,7 @@ func _on_info(info: Dictionary) -> void:
 		_bindings.buttons[2] = {"action": actions[1]}
 	if actions.size() > 2:
 		_bindings.buttons[3] = {"action": actions[2]}
+	var legend := []
 	for i in 4:
 		var b: Dictionary = _bindings.buttons[i]
 		var text := ""
@@ -364,6 +371,9 @@ func _on_info(info: Dictionary) -> void:
 			text = String(b.hold.name)
 		if gamepad:
 			gamepad.set_button(i, text, not b.is_empty())
+		legend.append([Gamepad3D.LETTERS[i], text])
+	if _console_view:
+		_console_view.set_legend(legend)
 	if board:
 		board.set_info(info)
 		if board.is_empty():
