@@ -37,6 +37,11 @@
 - [ ] Errors from Run or Transfer (too large, device refused, upload failed) show in plain words in the status line.
 - [ ] The chain compiles to the same bytecode the device accepts (`protocol/test_vectors.json` cases still pass).
 
+*Owner direction, 2026-11-10:*
+
+- [ ] The builder has an upright (portrait) layout as well as sideways, and drops the landscape lock story 002 put on it.
+- [ ] `INTENT UNKNOWN — needs a design pass`: the routine-making UI, especially for Transferred routines, needs a better design than the current board. Start the story with a short design pass (`/ux-design` or `/quick-design`) and agree it with the owner before coding.
+
 ---
 
 ## Implementation Notes
