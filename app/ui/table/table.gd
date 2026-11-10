@@ -11,6 +11,7 @@ extends Node3D
 const HOME_SCENE := "res://ui/home/home.tscn"
 const CONTENT := Vector2(19.2, 9.6)   # world area that must stay visible (x by z)
 const LIVE_CONTENT := Vector2(15.6, 7.4)
+const LIVE_CONTENT_UPRIGHT := Vector2(6.8, 13.6)
 const BUILDER_CONTENT := Vector2(9.0, 9.6)
 const LIVE_PAD_SCALE := 1.7
 const TILT_DEG := 12.0                # slight tilt so pressed buttons and shadows read
@@ -56,10 +57,7 @@ func _ready() -> void:
 		Device.log_added.connect(_on_device_log)
 		Device.telemetry_received.connect(_on_telemetry)
 		Device.routine_changed.connect(_on_routine_console)
-		if gamepad and gamepad.screen_viewport:
-			_console_view = ConsoleView.new()
-			gamepad.screen_viewport.add_child(_console_view)
-			_console_view.setup(console)
+		_attach_console_view()
 	if gamepad:
 		gamepad.stick_changed.connect(_on_stick)
 		gamepad.button_changed.connect(_on_button)
@@ -67,7 +65,10 @@ func _ready() -> void:
 	if board:
 		Device.routine_changed.connect(_on_routine)
 		board.run_requested.connect(_on_run)
-	get_viewport().size_changed.connect(_fit_camera)
+	if mode == "builder":
+		# Builder is landscape-only for now (story 003 removes the lock).
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	_fit_camera()
 	if Device.is_ready():
 		_on_info(Device.info)
@@ -114,10 +115,7 @@ func _build_world() -> void:
 	if mode != "builder":
 		gamepad = Gamepad3D.new()
 		if mode == "live":
-			_content = LIVE_CONTENT
-			gamepad.layout = Gamepad3D.LAYOUT_SIDEWAYS
-			gamepad.position = Vector3(0, 0, -0.2)
-			gamepad.scale = Vector3.ONE * LIVE_PAD_SCALE
+			_place_live_pad()
 		else:
 			gamepad.position = Vector3(-5.0, 0, 0.25)
 			gamepad.scale = Vector3.ONE * 1.18
@@ -131,6 +129,63 @@ func _build_world() -> void:
 		else:
 			board.position = Vector3(3.75, 0, 0.1)
 		add_child(board)
+
+
+func _exit_tree() -> void:
+	if mode == "builder":
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
+
+
+func _live_layout() -> String:
+	var size := get_viewport().get_visible_rect().size
+	return Gamepad3D.LAYOUT_UPRIGHT if size.y > size.x else Gamepad3D.LAYOUT_SIDEWAYS
+
+
+## Sets the Live pad's layout, placement and framing for the current viewport aspect.
+func _place_live_pad() -> void:
+	gamepad.layout = _live_layout()
+	if gamepad.layout == Gamepad3D.LAYOUT_UPRIGHT:
+		_content = LIVE_CONTENT_UPRIGHT
+		gamepad.position = Vector3(0, 0, 0.35)
+		gamepad.scale = Vector3.ONE
+	else:
+		_content = LIVE_CONTENT
+		gamepad.position = Vector3(0, 0, -0.2)
+		gamepad.scale = Vector3.ONE * LIVE_PAD_SCALE
+
+
+func _attach_console_view() -> void:
+	if gamepad and gamepad.screen_viewport:
+		_console_view = ConsoleView.new()
+		gamepad.screen_viewport.add_child(_console_view)
+		_console_view.fit(Vector2(gamepad.screen_viewport.size))
+		_console_view.setup(console)
+
+
+func _on_viewport_resized() -> void:
+	if mode == "live" and gamepad and _live_layout() != gamepad.layout:
+		_rebuild_live_pad()
+	_fit_camera()
+
+
+## Rotation: swaps sideways <-> upright. The connection, the ConsoleLog and the device
+## state are untouched and no STOP is sent. Held pad touches are let go first (the
+## device sees the stick centre / hold released), then the pad and its screen are rebuilt.
+func _rebuild_live_pad() -> void:
+	gamepad.release_all()
+	for index in _owners.keys():
+		if _owners[index] == "pad":
+			_owners.erase(index)
+	gamepad.queue_free()
+	gamepad = Gamepad3D.new()
+	_place_live_pad()
+	add_child(gamepad)
+	gamepad.stick_changed.connect(_on_stick)
+	gamepad.button_changed.connect(_on_button)
+	gamepad.stop_pressed.connect(_on_stop)
+	_attach_console_view()
+	if Device.is_ready():
+		_on_info(Device.info)
 
 
 ## Keeps the mode's content area visible on any aspect ratio (iPhone wide, iPad 4:3), below the top bar.
@@ -273,6 +328,9 @@ func _build_overlay() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.add_theme_color_override("font_color", Clay.INK.lerp(Clay.TABLE, 0.35))
 	_status.add_theme_font_size_override("font_size", 14)
+	# Wrap long status text instead of widening the row past a narrow (upright) screen.
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.custom_minimum_size.x = 80
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_status)
 	if mode == "both":

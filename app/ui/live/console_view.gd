@@ -27,6 +27,12 @@ func _init() -> void:
 	size = SIZE_PX
 
 
+## Resizes the view to the screen's pixel size (the upright console is taller than wide).
+func fit(px: Vector2) -> void:
+	custom_minimum_size = Vector2.ZERO
+	size = px
+
+
 ## Binds the view to a ConsoleLog and to the Device link state.
 func setup(console: ConsoleLog) -> void:
 	_build()

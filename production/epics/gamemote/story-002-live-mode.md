@@ -70,11 +70,12 @@
 
 ## Files
 
-- `src/ui/live/live_mode.gd`, `src/ui/live/live_mode.tscn` (new)
-- `src/ui/table/gamepad_3d.gd`, `src/ui/table/table.gd` (bindings move out; upright/sideways layout)
-- `src/ui/live/console.gd` (new: crystal console)
-- `src/ui/home/home.gd` (upright layout), `src/project.godot` (orientation)
-- `src/tests/run_tests.gd`
+- `src/ui/live/console_log.gd` (new: console lines, merging, round-trip time)
+- `src/ui/live/console_view.gd` (new: console screen UI, status bar, log, letter legend)
+- `src/ui/table/gamepad_3d.gd` (sideways and upright controller, crystal block, screen quad)
+- `src/ui/table/table.gd` (console wiring, layout switch on rotation, builder landscape lock)
+- `src/ui/table/clay.gd` (new colours), `src/ui/home/home.gd` (upright layout)
+- `src/core/device_service.gd` (round-trip and command-error signals), `src/project.godot` (orientation: sensor)
 
 ---
 

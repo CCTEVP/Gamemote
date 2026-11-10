@@ -1,0 +1,8 @@
+Reviewed-Content-Hash: app/ui/live/console_log.gd 5226435987cf3fb98c5a1d19b5dc795b98d60aad
+Reviewed-Content-Hash: app/ui/live/console_view.gd b05f3cd27dfacf169fff003e3e1a8fd3ce05ed36
+Reviewed-Content-Hash: app/ui/table/gamepad_3d.gd 4b967456bc616f610cd320dcfaf845fa8b217ff2
+Reviewed-Content-Hash: app/ui/table/table.gd 5bcb116a239953045a339671fb619a1ff6628176
+Reviewed-Content-Hash: app/ui/table/clay.gd 5d7f8c043ad4a93add367452e43e3ec68fe58b4f
+Reviewed-Content-Hash: app/ui/home/home.gd 4c68dfd2b9ab6168e10719d1d2270d4130d43aaa
+Reviewed-Content-Hash: app/core/device_service.gd c3843a291207ce28f2dbbc3de7303f14cf8a0974
+Reviewed-Content-Hash: app/project.godot 17bf08fe929040fe80bf2c344792f8ea56e91cf2

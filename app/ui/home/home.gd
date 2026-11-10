@@ -11,6 +11,8 @@ const TILE_MIN_HEIGHT := 120.0
 const BUTTON_HEIGHT := 48.0
 
 var _status: Label
+var _tiles: BoxContainer
+var _top: BoxContainer
 var _connect: Button
 var _bluetooth: Button
 var _mock: Button
@@ -25,6 +27,18 @@ func _ready() -> void:
 	Device.state_changed.connect(_on_state)
 	Device.devices_changed.connect(_on_devices)
 	_on_state(Device.state)
+	get_viewport().size_changed.connect(_apply_orientation)
+	_apply_orientation()
+
+
+## Portrait: the two tiles stack vertically; landscape: side by side.
+func _apply_orientation() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var upright := size.y > size.x
+	_tiles.vertical = upright
+	# Upright: title, status and Connect stack, so the row never outgrows a narrow screen.
+	_top.vertical = upright
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if upright else HORIZONTAL_ALIGNMENT_RIGHT
 
 
 # ------------------------------------------------------------------ layout
@@ -50,7 +64,8 @@ func _build() -> void:
 	margin.add_child(column)
 
 	# Title and connection row.
-	var top := HBoxContainer.new()
+	var top := BoxContainer.new()
+	_top = top
 	top.add_theme_constant_override("separation", 12)
 	column.add_child(top)
 	var title := Label.new()
@@ -63,6 +78,9 @@ func _build() -> void:
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_status.add_theme_font_size_override("font_size", 17)
+	# Wrap long status text instead of widening the row past a narrow (upright) screen.
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.custom_minimum_size.x = 80
 	_status.add_theme_color_override("font_color", Clay.INK)
 	top.add_child(_status)
 	_connect = Clay.pill_button("Connect", BUTTON_HEIGHT)
@@ -90,7 +108,8 @@ func _build() -> void:
 	_select_transport_button()
 
 	# The two big choices.
-	var tiles := HBoxContainer.new()
+	var tiles := BoxContainer.new()
+	_tiles = tiles
 	tiles.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tiles.add_theme_constant_override("separation", 16)
 	column.add_child(tiles)
@@ -105,6 +124,8 @@ func _build() -> void:
 	_reason = Label.new()
 	_reason.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reason.add_theme_font_size_override("font_size", 17)
+	_reason.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reason.custom_minimum_size.x = 80
 	_reason.add_theme_color_override("font_color", Clay.INK)
 	bottom.add_child(_reason)
 	var classic := Button.new()

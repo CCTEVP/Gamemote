@@ -9,10 +9,12 @@ signal button_changed(index: int, pressed: bool)
 signal stop_pressed
 
 ## Layout names (see `_layout_for`). "classic" = the old lavender pad ("both" mode);
-## "sideways" = the landscape handheld with the console screen (Live). A portrait
-## arrangement is added later as one more entry in `_layout_for`: nothing else places controls.
+## "sideways" = the landscape handheld with the console screen (Live landscape);
+## "upright" = the portrait handheld: a compact body with a tall crystal block on top that
+## holds the console screen (Live portrait). Only `_layout_for` places controls.
 const LAYOUT_CLASSIC := "classic"
 const LAYOUT_SIDEWAYS := "sideways"
+const LAYOUT_UPRIGHT := "upright"
 ## Face-button letter per SLOT. Slot order comes from the table's bindings:
 ## slot 0 = first action (top, X), slot 1 = level channel held (right, B),
 ## slot 2 = second action (bottom, A), slot 3 = third action (left, Y).
@@ -32,7 +34,8 @@ const PRESS_DEPTH := 0.09
 const BUTTON_OFFSETS := [Vector2(0, -1), Vector2(1, 0), Vector2(0, 1), Vector2(-1, 0)]
 const BUTTON_COLORS := [Clay.MINT, Clay.PEACH, Clay.SKY, Clay.PINK]
 const LETTER_COLORS := [Clay.ORANGE, Clay.TEAL, Clay.CORAL, Clay.YELLOW]
-const SCREEN_PX := Vector2i(640, 352)   # pixels of the console SubViewport
+const SCREEN_PX := Vector2i(640, 352)   # pixels of the console SubViewport (sideways)
+const SCREEN_PX_UPRIGHT := Vector2i(432, 780)   # taller than wide (upright)
 
 ## Set before the node enters the tree.
 var layout := LAYOUT_CLASSIC
@@ -52,7 +55,7 @@ var _touches := {}                # touch index -> {"kind": "stick"|"button"|"st
 
 func _ready() -> void:
 	_L = _layout_for(layout)
-	_letters = layout != LAYOUT_CLASSIC
+	_letters = layout != LAYOUT_CLASSIC   # handheld layouts (sideways, upright)
 	_lift = float(_L.lift)
 	_build()
 
@@ -63,18 +66,29 @@ func _layout_for(name: String) -> Dictionary:
 		LAYOUT_SIDEWAYS:
 			return {"lift": 0.35, "stick": Vector2(-3.05, -0.1), "btn": Vector2(3.05, -0.1), "spread": 0.6,
 					"btn_r": 0.36, "stop": Vector2(0.0, 1.22), "stop_r": 0.4,
-					"screen": Vector2(0.0, -0.35), "screen_size": Vector2(4.0, 2.2)}
+					"screen": Vector2(0.0, -0.35), "screen_size": Vector2(4.0, 2.2), "screen_px": SCREEN_PX}
+		LAYOUT_UPRIGHT:
+				# Body spans z 2.0..6.0 (compact, controls fill it); crystal spans z -6.7..2.1 above it.
+				return {"lift": 0.35, "stick": Vector2(-1.9, 4.0), "btn": Vector2(1.8, 4.0), "spread": 0.58,
+						"btn_r": 0.36, "stop": Vector2(-0.05, 4.7), "stop_r": 0.4,
+						"screen": Vector2(0.0, -2.3), "screen_size": Vector2(4.5, 8.1), "screen_px": SCREEN_PX_UPRIGHT,
+						"crystal_size": Vector2(5.2, 8.8), "body_size": Vector2(6.4, 4.0), "body_z": 4.0}
 		_:
 			return {"lift": 0.0, "stick": STICK_POS, "btn": BUTTON_CENTER, "spread": BUTTON_SPREAD,
 					"btn_r": BUTTON_RADIUS, "stop": STOP_POS, "stop_r": STOP_RADIUS,
-					"screen": Vector2.ZERO, "screen_size": Vector2.ZERO}
+					"screen": Vector2.ZERO, "screen_size": Vector2.ZERO, "screen_px": Vector2i.ZERO}
 
 
 func _build() -> void:
-	var sideways := layout == LAYOUT_SIDEWAYS
-	var body_color := Clay.BODY_GREY if sideways else Clay.PAD
-	var dark := Clay.BODY_GREY_DARK if sideways else Clay.PAD_DARK
-	if sideways:
+	var handheld := layout != LAYOUT_CLASSIC
+	var body_color := Clay.BODY_GREY if handheld else Clay.PAD
+	var dark := Clay.BODY_GREY_DARK if handheld else Clay.PAD_DARK
+	if layout == LAYOUT_UPRIGHT:
+		# Compact, almost square clay body: no grips, no bumps, nothing below the controls.
+		var bs: Vector2 = _L.body_size
+		_add_rounded_slab(bs, 1.1, Vector3(0, 0, _L.body_z), 0.6, body_color)
+		_build_screen()
+	elif layout == LAYOUT_SIDEWAYS:
 		# Handheld: a long matte body, two rounded grips and two small shoulder bumps.
 		add_child(Clay.pill(8.6, 3.4, 0.6, body_color))
 		for side in [-1, 1]:
@@ -94,11 +108,11 @@ func _build() -> void:
 
 	# Stick: a well (ring), then a pivot holding the knob.
 	var sp: Vector2 = _L.stick
-	var ring_color := Clay.TEAL_DARK if sideways else dark
-	var stick_color := Clay.TEAL if sideways else Clay.STICK
+	var ring_color := Clay.TEAL_DARK if handheld else dark
+	var stick_color := Clay.TEAL if handheld else Clay.STICK
 	var well := Clay.disc(0.95, 0.42, ring_color)
 	well.position = Vector3(sp.x, _lift, sp.y)
-	if sideways:
+	if handheld:
 		# A low teal ring resting on the body top (y = 0.6), not a tall post.
 		well = Clay.disc(0.8, 0.1, ring_color)
 		well.position = Vector3(sp.x, 0.56, sp.y)
@@ -111,18 +125,18 @@ func _build() -> void:
 	var cap := Clay.disc(0.62, 0.16, stick_color)
 	cap.position.y += 0.33
 	_stick_pivot.add_child(cap)
-	var top := Clay.dome(0.55, 0.12, Clay.TEAL.lightened(0.08) if sideways else Clay.GRAPE)
+	var top := Clay.dome(0.55, 0.12, Clay.TEAL.lightened(0.08) if handheld else Clay.GRAPE)
 	top.position.y = 0.49
 	_stick_pivot.add_child(top)
 
 	# Face buttons (diamond: top, right, bottom, left).
 	for i in 4:
 		var center: Vector2 = _L.btn + BUTTON_OFFSETS[i] * float(_L.spread)
-		var color: Color = LETTER_COLORS[i] if sideways else BUTTON_COLORS[i]
-		_buttons.append(_make_button(center, _L.btn_r, color, LETTERS[i] if sideways else "", 52 if sideways else 30))
+		var color: Color = LETTER_COLORS[i] if handheld else BUTTON_COLORS[i]
+		_buttons.append(_make_button(center, _L.btn_r, color, LETTERS[i] if handheld else "", 52 if handheld else 30))
 
 	# STOP: red, centred (under the screen when there is one).
-	_stop = _make_button(_L.stop, _L.stop_r, Clay.STOP_RED if sideways else Clay.STOP, "STOP", 30 if sideways else 34)
+	_stop = _make_button(_L.stop, _L.stop_r, Clay.STOP_RED if handheld else Clay.STOP, "STOP", 30 if handheld else 34)
 
 
 ## The console screen: a dark bezel slab with a quad textured by a SubViewport (2D UI),
@@ -130,6 +144,8 @@ func _build() -> void:
 func _build_screen() -> void:
 	var c: Vector2 = _L.screen
 	var size: Vector2 = _L.screen_size
+	var upright := layout == LAYOUT_UPRIGHT
+	var top_y := 0.625
 	var bezel := MeshInstance3D.new()
 	# A slim slab just under the screen, in the screen's own dark tone, so the screen's
 	# rounded corners read as the edge.
@@ -139,8 +155,14 @@ func _build_screen() -> void:
 	bezel.material_override = Clay.mat(Color("1b1f29"), 0.35)
 	bezel.position = Vector3(c.x, 0.4, c.y)
 	add_child(bezel)
+	if upright:
+		# The screen lies on top of the crystal block (top at y = 1.3), so the glass frames
+		# it instead of washing it out.
+		top_y = 1.36
+		bezel.position.y = 1.12
+		_build_crystal(c)
 	screen_viewport = SubViewport.new()
-	screen_viewport.size = SCREEN_PX
+	screen_viewport.size = _L.screen_px
 	screen_viewport.disable_3d = true
 	screen_viewport.gui_disable_input = true
 	screen_viewport.transparent_bg = false
@@ -156,8 +178,58 @@ func _build_screen() -> void:
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
 	quad.material_override = m
 	quad.rotation.x = -PI / 2
-	quad.position = Vector3(c.x, 0.625, c.y)
+	quad.position = Vector3(c.x, top_y, c.y)
 	add_child(quad)
+
+
+## Upright layout: a clear, pale-blue crystal block with a lighter rim, standing on the body.
+## The screen sits inside it, seen through the translucent top.
+func _build_crystal(c: Vector2) -> void:
+	var cs: Vector2 = _L.crystal_size
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.74, 0.88, 0.97, 0.3)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.08
+	glass.metallic_specular = 0.9
+	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var rim := StandardMaterial3D.new()
+	rim.albedo_color = Color(0.93, 0.98, 1.0, 0.55)
+	rim.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rim.roughness = 0.1
+	# Block, a slightly wider lower plinth (bevel) and a thin bright top rim.
+	var edge := 0.12
+	var parts := [[Vector3(cs.x, 1.3, cs.y), Vector3(c.x, 0.65, c.y), glass],
+			[Vector3(cs.x + 0.16, 0.18, cs.y + 0.16), Vector3(c.x, 0.09, c.y), rim],
+			[Vector3(cs.x, 0.07, edge), Vector3(c.x, 1.3, c.y - cs.y * 0.5 + edge * 0.5), rim],
+			[Vector3(cs.x, 0.07, edge), Vector3(c.x, 1.3, c.y + cs.y * 0.5 - edge * 0.5), rim],
+			[Vector3(edge, 0.07, cs.y), Vector3(c.x - cs.x * 0.5 + edge * 0.5, 1.3, c.y), rim],
+			[Vector3(edge, 0.07, cs.y), Vector3(c.x + cs.x * 0.5 - edge * 0.5, 1.3, c.y), rim]]
+	for spec in parts:
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = spec[0]
+		mi.mesh = bm
+		mi.material_override = spec[2]
+		mi.position = spec[1]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mi)
+
+
+## A flat rounded-rectangle slab (box core plus four corner discs) resting on y = 0.
+func _add_rounded_slab(size: Vector2, r: float, at: Vector3, height: float, color: Color) -> void:
+	for dims in [Vector2(size.x - 2.0 * r, size.y - 0.14), Vector2(size.x - 0.14, size.y - 2.0 * r)]:
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(dims.x, height, dims.y)
+		mi.mesh = bm
+		mi.material_override = Clay.mat(color)
+		mi.position = at + Vector3(0, height * 0.5, 0)
+		add_child(mi)
+	for sx in [-1, 1]:
+		for sz in [-1, 1]:
+			var d := Clay.disc(r, height, color)
+			d.position = at + Vector3(sx * (size.x * 0.5 - r), 0, sz * (size.y * 0.5 - r))
+			add_child(d)
 
 
 func _make_button(center: Vector2, radius: float, color: Color, text: String, font: int) -> Dictionary:
