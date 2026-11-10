@@ -1,12 +1,12 @@
 # Story 001: Home and connect, split the app into two modes
 
 > **Epic**: Gamemote
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-06
+> **Last Updated**: 2026-11-10
 
 ## Context
 
@@ -75,7 +75,7 @@
 **Story Type**: UI
 **Required evidence**: a retained screenshot of Home (disconnected, connected) and each mode's entry, at iPhone and iPad sizes, in `production/qa/evidence/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created — production/qa/evidence/story-001-home-and-connect/
 
 ---
 
@@ -83,3 +83,12 @@
 
 - Depends on: None
 - Unlocks: `production/epics/gamemote/story-002-live-mode.md`, `story-003-routine-builder.md`, `story-004-peek.md`, `story-006-kid-friendly-basics.md`
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-10
+**Criteria**: 7/7 passing (none deferred; Connect, Back, auto-reconnect and safe area confirmed by the owner on a build)
+**Deviations**: None
+**Test Evidence**: production/qa/evidence/story-001-home-and-connect/ (11 screenshots, iPhone 1688x780 and iPad 2048x1536; unit tests waived at qa.level minimal)
+**Reviewed by**: self, no independent review
