@@ -23,6 +23,10 @@ signal devices_changed(devices: Dictionary)
 signal info_changed(info: Dictionary)
 signal telemetry_received(flags: int, step: int, values: Array)
 signal rtt_updated(p50: int, p95: int)
+## Every single PING/PONG round-trip sample (ms), for the Live console.
+signal rtt_measured(ms: int)
+## The device answered a command with an error status (GmProtocol status code).
+signal command_failed(status: int)
 signal routine_changed(mode: int, state: int, block_id: Variant)
 
 var transport: GmTransport
@@ -214,6 +218,7 @@ func _on_frame(frame: PackedByteArray) -> void:
 			_acks[f.ref_seq] = f.status
 			if f.status != GmProtocol.OK:
 				log_line("Device answered %s" % GmProtocol.status_name(f.status))
+				command_failed.emit(f.status)
 		GmProtocol.PONG:
 			_add_rtt((_now() & 0xFFFFFFFF) - int(f.t))
 		GmProtocol.TELEMETRY:
@@ -235,6 +240,7 @@ func _add_rtt(ms: int) -> void:
 	if ms < 0 or ms > 10000:
 		return
 	_rtts.append(ms)
+	rtt_measured.emit(ms)
 	if _rtts.size() > RTT_WINDOW:
 		_rtts.pop_front()
 	var sorted := _rtts.duplicate()

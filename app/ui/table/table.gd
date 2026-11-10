@@ -36,6 +36,9 @@ var _orbiting := false
 var _status: Label
 var _connect: Button
 var _auto_connect := false
+## Live mode only (null elsewhere): the plain-word console the Live view renders.
+var console: ConsoleLog
+var _last_state := -1
 var _bindings := {"x": -1, "y": -1, "buttons": [{}, {}, {}, {}]}
 
 
@@ -45,6 +48,13 @@ func _ready() -> void:
 	Device.state_changed.connect(_on_state)
 	Device.info_changed.connect(_on_info)
 	Device.devices_changed.connect(_on_devices)
+	if mode == "live":
+		console = ConsoleLog.new()
+		Device.rtt_measured.connect(console.add_rtt)
+		Device.command_failed.connect(_on_command_failed)
+		Device.log_added.connect(_on_device_log)
+		Device.telemetry_received.connect(_on_telemetry)
+		Device.routine_changed.connect(_on_routine_console)
 	if gamepad:
 		gamepad.stick_changed.connect(_on_stick)
 		gamepad.button_changed.connect(_on_button)
@@ -312,11 +322,16 @@ func _on_state(state: int) -> void:
 	elif state == Device.State.RECONNECTING:
 		text = "Connection lost, reconnecting…"
 	_status.text = text
+	_console_state(state)
+	_last_state = state
 	if _connect:
 		_connect.text = "Disconnect" if state in [Device.State.READY, Device.State.CONNECTING, Device.State.RECONNECTING] else "Connect"
 		_connect.disabled = state == Device.State.OFF
 	if state != Device.State.READY and gamepad:
-		gamepad.release_all()
+		gamepad.release_all()   # lost link: let go of every control (the device fails safe)
+		for index in _owners.keys():
+			if _owners[index] == "pad":
+				_owners.erase(index)
 	_update_run_buttons()
 
 
@@ -381,10 +396,17 @@ func _axis_value(c: Dictionary, v: float) -> int:
 func _on_stick(v: Vector2) -> void:
 	if not Device.is_ready() or Device.run_mode == Device.RunMode.TRANSFER:
 		return
+	var parts := []
 	if _bindings.x >= 0:
-		Device.set_channel(_bindings.x, _axis_value(_channel(_bindings.x), v.x))
+		var xv := _axis_value(_channel(_bindings.x), v.x)
+		Device.set_channel(_bindings.x, xv)
+		parts.append("%s %d" % [_channel(_bindings.x).get("name", "speed"), xv])
 	if _bindings.y >= 0:
-		Device.set_channel(_bindings.y, _axis_value(_channel(_bindings.y), v.y))
+		var yv := _axis_value(_channel(_bindings.y), v.y)
+		Device.set_channel(_bindings.y, yv)
+		parts.append("%s %d" % [_channel(_bindings.y).get("name", "angle"), yv])
+	if console:
+		console.update("stick", "Stick: centred" if v == Vector2.ZERO or parts.is_empty() else "Stick: " + ", ".join(parts))
 
 
 func _on_button(i: int, pressed: bool) -> void:
@@ -396,16 +418,100 @@ func _on_button(i: int, pressed: bool) -> void:
 		for p in b.action.get("params", []):
 			params.append(int(p.get("default", p.get("min", 0))))
 		Device.trigger(int(b.action.id), params)
+		if console:
+			console.add("Sent: %s" % b.action.name, "command")
 	elif b.has("hold") and Device.run_mode != Device.RunMode.TRANSFER:
 		Device.set_channel(int(b.hold.id), int(b.hold.max) if pressed else int(b.hold.neutral))
+		if console:
+			console.add(("Holding: %s" if pressed else "Let go: %s") % b.hold.name, "command")
 
 
 func _on_stop() -> void:
 	if Device.is_ready():
 		Device.stop_routine()
 		Device.stop_all()
+		if console:
+			console.add("STOP sent: everything back to neutral", "command")
 	if board:
 		board.set_highlight(null)
+
+
+# ------------------------------------------------------------------ console (live mode)
+
+func _console_state(state: int) -> void:
+	if console == null:
+		return
+	match state:
+		Device.State.OFF:
+			console.add("Bluetooth is off", "error")
+		Device.State.IDLE:
+			if _last_state in [Device.State.CONNECTING, Device.State.RECONNECTING]:
+				console.add("Lost the connection to the gadget", "error")
+			elif _last_state == Device.State.READY:
+				console.add("Disconnected", "status")
+			else:
+				console.add("Not connected", "status")
+		Device.State.SCANNING:
+			console.add("Looking for gadgets…", "status")
+		Device.State.CONNECTING:
+			console.add("Connecting…", "status")
+		Device.State.READY:
+			console.add("Connected to %s" % Device.info.get("name", "the gadget"), "status")
+		Device.State.RECONNECTING:
+			console.add("Connection lost, reconnecting…", "error")
+
+
+## Plain words for a device error status (no codes shown to the player).
+func _status_words(status: int) -> String:
+	match status:
+		GmProtocol.BUSY:
+			return "The gadget is busy, try again"
+		GmProtocol.BAD_PROGRAM:
+			return "The gadget could not understand that routine"
+		_:
+			return "The gadget could not do that"
+
+
+func _on_command_failed(status: int) -> void:
+	console.add(_status_words(status), "error")
+
+
+## Device log lines: only the gadget's own messages and connection problems are shown.
+func _on_device_log(line: String) -> void:
+	var text := line.substr(line.find("  ") + 2) if line.find("  ") >= 0 else line
+	if text.begins_with("[device] "):
+		console.add("Gadget says: " + text.substr(9), "feedback")
+	elif text.begins_with("Connect failed"):
+		console.add("Could not connect to the gadget", "error")
+	elif text.begins_with("Connect timed out"):
+		console.add("Connecting took too long", "error")
+	elif text.begins_with("Cannot scan"):
+		console.add("Cannot look for gadgets yet", "error")
+
+
+func _on_telemetry(flags: int, _step: int, values: Array) -> void:
+	if flags & GmProtocol.FLAG_FAILSAFE_TRIPPED:
+		console.update("failsafe", "The gadget stopped itself (it lost contact)", "error")
+	var parts := []
+	var channels: Array = Device.info.get("channels", [])
+	for i in mini(values.size(), channels.size()):
+		parts.append("%s %d" % [channels[i].get("name", "channel"), int(values[i])])
+	if not parts.is_empty():
+		console.update("telemetry", "Gadget reports: " + ", ".join(parts), "feedback")
+
+
+func _on_routine_console(mode: int, state: int, _block: Variant) -> void:
+	var where := "in the app" if mode == Device.RunMode.LIVE else "on the gadget"
+	match state:
+		GmProtocol.RS_RUNNING:
+			if console.size() == 0 or not console.get_lines().back().text.begins_with("Routine running"):
+				console.add("Routine running %s" % where, "feedback")
+		GmProtocol.RS_FINISHED:
+			console.add("Routine finished", "feedback")
+		GmProtocol.RS_STOPPED:
+			console.add("Routine stopped", "feedback")
+		GmProtocol.RS_ERROR:
+			console.add("The routine hit a problem on the gadget", "error")
 
 
 # ------------------------------------------------------------------ routines
