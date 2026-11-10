@@ -22,6 +22,8 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 - Tests: `godot --headless --path app -s res://tests/run_tests.gd` and
   `python -m unittest discover -s tools/tests -t tools -p "test_*.py"`. Finished work is pushed
   to `main` (owner's decision).
+- Whenever the owner has to type something (a slash command, a terminal command, a value),
+  give it in its own fenced code block so it can be copied (owner's rule, 2026-11-10).
 - This repo installs the studio's agents and skills but not its `settings.json`: no hooks,
   no ask-first mode.
 - Local patch to the vendored framework: every `find "$var"` in `.claude/scripts/` and
