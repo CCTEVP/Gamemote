@@ -1,12 +1,12 @@
 # Story 002: Live mode (the clay gamepad as its own screen)
 
 > **Epic**: Gamemote
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: (set by /dev-story when implementation begins)
+> **Last Updated**: 2026-11-10
 
 ## Context
 
