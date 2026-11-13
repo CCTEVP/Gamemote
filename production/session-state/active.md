@@ -5,14 +5,14 @@ Task:
 <!-- /STATUS -->
 
 <!-- CHECKPOINT -->
-**Updated:** 2026-11-10
+**Updated:** 2026-11-13
 **Branch:** `claude/intelligent-planck-1tqhwt` (also pushed to `main`)
-**Current task:** /dev-story — production/epics/gamemote/story-002-live-mode.md (Live mode)
-**Next step:** /story-done production/epics/gamemote/story-002-live-mode.md
-**Blocked on:** nothing
-**Files in progress:** app/ui/live/console_log.gd, app/ui/live/console_view.gd, app/ui/table/gamepad_3d.gd, app/ui/table/table.gd, app/ui/table/clay.gd, app/ui/home/home.gd, app/core/device_service.gd, app/project.godot
-**Run result:** OBSERVED — Live sideways (grey handheld, teal stick, X/Y/A/B, red STOP, console with status bar, log, legend) and upright (compact body, crystal block with console, STOP between stick and buttons), reconnecting line in the console, Home upright with stacked tiles and Home sideways unchanged; iPhone and iPad sizes in production/qa/evidence/story-002-live-mode/
-**Open questions:** rotation switch while running, builder landscape lock, haptics and the 60 ms round-trip target need a device; upright body shows box seams; console status bar clips long gadget names
+**Current task:** native iOS trial (owner request): main is native SwiftUI + RealityKit; the Godot app is on the `Godot` branch
+**Next step:** owner opens ios/Gamemote.xcodeproj on the Mac, checks the previews and the 3D look, runs on the iPhone; then decide: continue native (CoreBluetooth transport, then the routine builder) or go back to Godot
+**Blocked on:** owner's look at the trial in Xcode
+**Files in progress:** none
+**Run result:** NOT VERIFIED — Swift cannot run in the cloud session; CI (Xcode 16.4) built the app and passed 18 core tests, but nobody has looked at the screens yet
+**Open questions:** stories 001/002 were written for the Godot app; re-check them against the native app after the trial
 <!-- /CHECKPOINT -->
 
 # Session state (checkpoint)
