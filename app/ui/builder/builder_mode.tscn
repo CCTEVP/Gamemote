@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://ui/builder/builder_mode.gd" id="1_builder"]
-
-[node name="BuilderMode" type="Node3D"]
-script = ExtResource("1_builder")

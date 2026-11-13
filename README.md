@@ -1,39 +1,49 @@
 # Gamemote
 
-An iPhone/iPad app, built with Godot, that remote-controls a Bluetooth LE microcontroller:
+A native iPhone/iPad app (SwiftUI + RealityKit) that remote-controls a Bluetooth LE
+microcontroller:
 
-- **Live control:** a game-controller-style UI bound to the device's channels and actions.
+- **Live control:** a clay game controller bound to the device's channels and actions, with a
+  console that shows what is sent and what the gadget answers.
 - **Routines:** sequences built in a Scratch-like block editor. They run either from the app
   (**Live**) or are uploaded to the board and keep running on their own (**Transferred**).
 
-**Status:** proof of concept. The tracer bullet (connect, control, routines in both modes) is ready
-for the first on-device test.
+**Status:** native port, trial stage. Home and Live work against the in-app mock device; the
+Bluetooth transport and the routine builder are being ported next. The previous Godot app is
+complete on the [`Godot`](https://github.com/CCTEVP/Gamemote/tree/Godot) branch.
 
-| Start here | |
-|---|---|
-| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Build, export to Xcode, run on iPhone/iPad, test checklist |
-| [docs/POC_PLAN.md](docs/POC_PLAN.md) | Plan, decisions, milestones, risks |
-| [protocol/PROTOCOL.md](protocol/PROTOCOL.md) | BLE protocol v0: what makes a board "Gamemote-compatible" |
-| [docs/diagrams/](docs/diagrams/) | Architecture map and expected-flow sequence (Archify HTML; open in a browser) |
+## Open in Xcode
+
+Requires Xcode 16 or newer (iOS 18 SDK).
+
+```bash
+open ios/Gamemote.xcodeproj
+```
+
+- **Previews:** open `HomeView.swift` or `LiveView.swift` and show the canvas
+  (Editor > Canvas). Each file has previews for landscape and upright, connected to the mock device.
+- **Run on your iPhone/iPad:** pick your device as the run destination and press Run. Signing
+  uses the same team and bundle ID as the Godot export (`com.gamemote.app`).
 
 ## Layout
 
 | Folder | What |
 |---|---|
-| `app/` | Godot 4.7 project (GDScript) |
-| `native/gamemote_ble/` | GDExtension: CoreBluetooth backend for iOS/iPadOS/macOS |
+| `ios/Gamemote/` | The app: SwiftUI screens, RealityKit controller, previews |
+| `ios/GamemoteCore/` | Swift package: protocol v0, device link, mock device, console log (+ tests) |
 | `protocol/` | GATT profile, frame format, routine bytecode, shared test vectors |
 | `tools/` | Python reference implementation, BLE device simulator (`gm_sim.py`), CLI client (`gm_cli.py`) |
-
-## Agent skills
-
-`.claude/skills/` holds the [Scenario Godot expert skills](https://github.com/scenario-labs/skills/tree/main/skills/game-engines/godot), pinned to a reviewed commit in `skills-lock.json`. Claude Code loads them automatically in this repo. Update with `npx skills update -p`.
+| `design/`, `production/` | Game brief, stories, reference images, screenshots |
 
 ## Tests
 
 ```bash
-python3 -m unittest discover -s tools/tests -t tools -p "test_*.py"
-godot --headless --path app --import && godot --headless --path app -s res://tests/run_tests.gd
+cd ios/GamemoteCore && swift test
 ```
 
-CI runs both on Linux, and compiles and link-checks the iOS/macOS extension on a macOS runner.
+```bash
+python3 -m unittest discover -s tools/tests -t tools -p "test_*.py"
+```
+
+CI runs the Python tests on Linux, and on a macOS runner it runs `swift test` and builds the app
+for the iOS Simulator.

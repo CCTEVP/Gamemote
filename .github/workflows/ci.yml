@@ -5,9 +5,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  GODOT_VERSION: 4.7.2
-
 jobs:
   python:
     name: Protocol + simulator (Python)
@@ -20,32 +17,20 @@ jobs:
       - run: pip install -r tools/requirements.txt
       - run: python -m unittest discover -s tools/tests -t tools -p "test_*.py" -v
 
-  godot:
-    name: App tests (Godot headless, Linux)
-    runs-on: ubuntu-latest
+  ios:
+    name: GamemoteCore tests + app build (macOS)
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Build GamemoteBle (Linux stub backend)
-        working-directory: native/gamemote_ble
+      - name: Show Xcode
+        run: xcodebuild -version
+      - name: Core tests (swift test)
+        working-directory: ios/GamemoteCore
+        run: swift test
+      - name: Build app for the iOS Simulator
         run: |
-          pip install scons
-          scons -j4 platform=linux target=template_debug
-      - name: Download Godot
-        run: |
-          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
-          unzip -q godot.zip
-          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
-      - name: Import project
-        # The first headless import that picks up a GDExtension can crash on exit
-        # (upstream godotengine/godot#111048); the import itself completes. The
-        # second import starts with the extension already registered and must be clean.
-        run: |
-          ./godot --headless --path app --import || echo "::warning::first import exited with $? (known upstream crash on exit)"
-          ./godot --headless --path app --import
-      - name: Run tests
-        run: ./godot --headless --path app -s res://tests/run_tests.gd
+          xcodebuild build \
+            -project ios/Gamemote.xcodeproj \
+            -scheme Gamemote \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO

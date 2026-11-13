@@ -12,14 +12,19 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Gamemote layout (read before writing code)
 
-- The Godot project is `app/` (`app/project.godot`). `src` is a link to `app/`, so the
-  framework's code root (`src/`) and the real project are the same files. Run Godot with
-  `--path app`.
-- `native/gamemote_ble/`: GDExtension (C++/Objective-C++, CoreBluetooth); `protocol/`: BLE
-  protocol v0 and test vectors; `tools/`: Python simulator (`gm_sim.py`) and CLI.
-- Two separate app modes: **Live** (game controller) and **Routine builder**. See
-  `production/session-state/active.md` and `docs/POC_PLAN.md`.
-- Tests: `godot --headless --path app -s res://tests/run_tests.gd` and
+- **Native iOS app since 2026-11-13** (owner's decision): SwiftUI + RealityKit + CoreBluetooth,
+  iOS 18. The Godot app is complete on the `Godot` branch; `main` is native.
+- `ios/Gamemote.xcodeproj` + `ios/Gamemote/`: the app (SwiftUI screens with `#Preview`, the
+  RealityKit clay controller). The project uses a synchronized folder: any Swift file added to
+  `ios/Gamemote/` is in the target, no project edit needed.
+- `ios/GamemoteCore/`: Swift package with everything that is not UI (protocol, device link,
+  mock device, console log) and its XCTest tests against `protocol/test_vectors.json`.
+- `protocol/`: BLE protocol v0 and test vectors; `tools/`: Python simulator (`gm_sim.py`) and CLI.
+- Two separate app modes: **Live** (game controller) and **Routine builder**.
+- Swift cannot be compiled in the cloud session (Linux, no toolchain). Verification is the CI
+  job "GamemoteCore tests + app build (macOS)": push, then read its result with the GitHub
+  tools. Screens are checked by the owner in Xcode previews or on the device.
+- Tests: `cd ios/GamemoteCore && swift test` and
   `python -m unittest discover -s tools/tests -t tools -p "test_*.py"`. Finished work is pushed
   to `main` (owner's decision).
 - Whenever the owner has to type something (a slash command, a terminal command, a value),

@@ -1,8 +1,0 @@
-{
-	"enabled_classes": [
-		"RefCounted",
-		"OS",
-		"Engine",
-		"SceneTree"
-	]
-}

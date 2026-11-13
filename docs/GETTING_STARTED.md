@@ -1,5 +1,8 @@
 # Getting started: run the tracer bullet on your iPhone / iPad
 
+> **Note (2026-11-13):** this guide is for the Godot app, now on the `Godot` branch. `main` is the
+> native Xcode app: see the README's "Open in Xcode" section.
+
 This guide covers the PoC workflow end to end: pull `main` → build the native
 Bluetooth extension → try the app on your Mac → export to Xcode → install on
 iPhone/iPad → connect to the simulated device running on your Mac.
